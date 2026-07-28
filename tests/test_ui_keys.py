@@ -123,11 +123,19 @@ def test_the_picker_is_rebuilt_every_time_it_opens(
 
 
 @pytest.fixture
-def new_key(gtk, fake_home: Path, fake_bin):
+def new_key(window, fake_home: Path, fake_bin):
+    """A NewKeyDialog presented on a window, the way the app opens it.
+
+    Presented rather than merely built: `create()` closes the dialog on
+    success, and `Adw.Dialog.close()` is a no-op plus a critical when nothing
+    ever presented it.
+    """
     from parvussh.ui.dialogs import NewKeyDialog
 
     def build(on_created=None, toast=None):
-        return NewKeyDialog(on_created=on_created, toast=toast)
+        dialog = NewKeyDialog(on_created=on_created, toast=toast)
+        dialog.present(window)
+        return dialog
 
     return build
 

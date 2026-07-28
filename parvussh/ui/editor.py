@@ -15,6 +15,7 @@ from parvussh import APP_NAME  # noqa: E402
 from parvussh.core.models import Block, Entry  # noqa: E402
 from parvussh.data.keywords import BASIC, Keyword, for_option  # noqa: E402
 from parvussh.i18n import t  # noqa: E402
+from parvussh.ui.markup import group, text_row  # noqa: E402
 from parvussh.ui.popovers import AddOptionPopover  # noqa: E402
 from parvussh.ui.rows import OptionRow  # noqa: E402
 
@@ -93,13 +94,13 @@ class Editor(Adw.NavigationPage):
         return header
 
     def _form(self) -> Adw.PreferencesPage:
-        self.host = Adw.EntryRow(title=t("editor.field.host"))
-        self.hostname = Adw.EntryRow(title=t("editor.field.hostname"))
-        self.user = Adw.EntryRow(title=t("editor.field.user"))
-        self.port = Adw.EntryRow(title=t("editor.field.port"))
+        self.host = text_row(Adw.EntryRow, title=t("editor.field.host"))
+        self.hostname = text_row(Adw.EntryRow, title=t("editor.field.hostname"))
+        self.user = text_row(Adw.EntryRow, title=t("editor.field.user"))
+        self.port = text_row(Adw.EntryRow, title=t("editor.field.port"))
         self.port.set_input_purpose(Gtk.InputPurpose.DIGITS)
 
-        basics = Adw.PreferencesGroup(
+        basics = group(
             title=t("editor.group.connection"),
             description=t("editor.group.connection_description"),
         )
@@ -108,7 +109,7 @@ class Editor(Adw.NavigationPage):
             basics.add(row)
 
         self.options: list[OptionRow] = []
-        self.extras = Adw.PreferencesGroup(title=t("editor.group.extras"))
+        self.extras = group(title=t("editor.group.extras"))
         self.extras.set_header_suffix(self._extras_suffix())
         self.empty_extras = Gtk.Label(
             label=t("editor.group.extras_empty"),

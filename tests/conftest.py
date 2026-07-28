@@ -170,6 +170,36 @@ def fake_bin(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> FakeBin:
     return FakeBin(bindir)
 
 
+#: Everything GTK logged since the capture was installed. GTK reports real
+#: bugs — failed markup, missing icons, broken widget trees — on stderr and
+#: then carries on, so without this a gui test passes while the interface is
+#: visibly broken. That is exactly how the `RemoteCommand cd /srv && bash -l`
+#: markup failure survived M13.
+GTK_LOG: list[str] = []
+_capture_installed = False
+LOUD = ("WARNING", "CRITICAL", "ERROR")
+
+
+def _install_log_capture() -> None:
+    """Route GLib's log stream into `GTK_LOG`. Can only be done once."""
+    global _capture_installed
+    if _capture_installed:
+        return
+    from gi.repository import GLib
+
+    def writer(*args: object) -> object:
+        level, fields = args[0], args[1]
+        try:
+            message = GLib.log_writer_format_fields(level, fields, False)
+        except (TypeError, GLib.Error):
+            message = "<unformattable log message>"
+        GTK_LOG.append(message)
+        return GLib.LogWriterOutput.HANDLED
+
+    GLib.log_set_writer_func(writer, None)
+    _capture_installed = True
+
+
 @pytest.fixture
 def gtk():
     """The GTK namespaces, or a clean skip when the typelibs are missing.
@@ -177,6 +207,8 @@ def gtk():
     Skips rather than fails: `make test` must stay green on a machine with no
     display and no GObject introspection data, which is the normal state of a
     minimal CI container before the gir packages land.
+
+    Also fails the test if GTK complained while it ran. See `GTK_LOG`.
     """
     gi = pytest.importorskip("gi", reason="PyGObject is not installed")
     try:
@@ -188,7 +220,15 @@ def gtk():
     if not Gtk.init_check():
         pytest.skip("no display available; run under xvfb-run")
     Adw.init()
-    return Adw, Gtk
+
+    _install_log_capture()
+    GTK_LOG.clear()
+    yield Adw, Gtk
+
+    complaints = [
+        message for message in GTK_LOG if any(level in message for level in LOUD)
+    ]
+    assert not complaints, "GTK complained:\n" + "\n".join(complaints)
 
 
 @pytest.fixture

@@ -19,6 +19,7 @@ from gi.repository import Adw, Gtk  # noqa: E402
 from parvussh.core.keys import SshKey, list_keys  # noqa: E402
 from parvussh.data.keywords import Keyword, search  # noqa: E402
 from parvussh.i18n import t  # noqa: E402
+from parvussh.ui.markup import text_row  # noqa: E402
 
 WIDTH = 420
 LIST_HEIGHT = 320
@@ -93,7 +94,8 @@ class AddOptionPopover(Gtk.Popover):
         while (child := self.listbox.get_first_child()) is not None:
             self.listbox.remove(child)
         for keyword in search(self.search.get_text(), self.used()):
-            row = Adw.ActionRow(
+            row = text_row(
+                Adw.ActionRow,
                 title=keyword.name,
                 subtitle=keyword.description,
                 subtitle_lines=2,
@@ -184,8 +186,12 @@ class KeyPickerPopover(Gtk.Popover):
             selection_mode=Gtk.SelectionMode.NONE, css_classes=["boxed-list"]
         )
         for key in self.keys:
-            row = Adw.ActionRow(
-                title=key.name, subtitle=key_summary(key), activatable=True
+            # A key's comment is whatever the user typed at ssh-keygen time.
+            row = text_row(
+                Adw.ActionRow,
+                title=key.name,
+                subtitle=key_summary(key),
+                activatable=True,
             )
             row.key = key
             # Per row rather than the list box's `row-activated`: an

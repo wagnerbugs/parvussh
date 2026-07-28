@@ -12,6 +12,7 @@ from gi.repository import Adw, Gtk  # noqa: E402
 from parvussh.data.guide import ABOUT_CONFIG, SECTIONS, Section  # noqa: E402
 from parvussh.data.keywords import CATALOG, ENUM, GROUPS  # noqa: E402
 from parvussh.i18n import t  # noqa: E402
+from parvussh.ui.markup import group, text_row  # noqa: E402
 
 SUBTITLE_LINES = 4
 
@@ -30,18 +31,19 @@ class HelpDialog(Adw.PreferencesDialog):
             title=t("help.page.options"), icon_name="view-list-symbolic"
         )
         for group_key in GROUPS:
-            group = Adw.PreferencesGroup(title=t(f"group.{group_key}"))
+            category = group(title=t(f"group.{group_key}"))
             for keyword in CATALOG:
                 if keyword.group != group_key:
                     continue
-                group.add(
-                    Adw.ActionRow(
+                category.add(
+                    text_row(
+                        Adw.ActionRow,
                         title=keyword.name,
                         subtitle=option_subtitle(keyword),
                         subtitle_lines=SUBTITLE_LINES,
                     )
                 )
-            page.add(group)
+            page.add(category)
         return page
 
     def _keys_page(self) -> Adw.PreferencesPage:
@@ -78,9 +80,13 @@ def option_subtitle(keyword) -> str:
 
 
 def prose_group(section: Section) -> Adw.PreferencesGroup:
-    """One guide section as a wrapped, selectable, copy-friendly block."""
-    group = Adw.PreferencesGroup(title=section.title)
-    group.add(
+    """One guide section as a wrapped, selectable, copy-friendly block.
+
+    The body is the one place markup is deliberate: `<tt>` around commands,
+    escaped by hand at the source in `i18n/pt_br/guide.py`.
+    """
+    section_group = group(title=section.title)
+    section_group.add(
         Gtk.Label(
             label=section.body,
             wrap=True,
@@ -90,4 +96,4 @@ def prose_group(section: Section) -> Adw.PreferencesGroup:
             selectable=True,
         )
     )
-    return group
+    return section_group

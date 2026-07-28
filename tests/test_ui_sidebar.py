@@ -70,13 +70,15 @@ def test_a_wildcard_row_does_not_claim_a_missing_hostname(listed) -> None:
     assert listed.sidebar.rows()[2].get_subtitle() == "Padrão curinga"
 
 
-def test_an_alias_with_markup_characters_is_escaped(window, fake_home: Path) -> None:
-    """`Adw.ActionRow` parses its title as markup; an alias is plain text."""
+def test_an_alias_with_markup_characters_is_shown_literally(
+    window, fake_home: Path
+) -> None:
+    """`Adw.ActionRow` parses its title as markup unless told not to."""
     (fake_home / ".ssh" / "config").write_text("Host a<b>&c\n", encoding="utf-8")
 
     window.reload()
 
-    assert window.sidebar.rows()[0].get_title() == "a&lt;b&gt;&amp;c"
+    assert window.sidebar.rows()[0].get_title() == "a<b>&c"
 
 
 def test_reloading_replaces_the_rows_rather_than_appending(listed) -> None:

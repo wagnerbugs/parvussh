@@ -9,10 +9,11 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Adw, Gio, GLib, Gtk  # noqa: E402
+from gi.repository import Adw, Gio, Gtk  # noqa: E402
 
 from parvussh.core.models import Block  # noqa: E402
 from parvussh.i18n import t  # noqa: E402
+from parvussh.ui.markup import text_row  # noqa: E402
 
 MARGIN = 12
 HOST_ICON = "network-server-symbolic"
@@ -119,9 +120,11 @@ class Sidebar(Adw.NavigationPage):
             self.listbox.select_row(chosen)
 
     def _build_row(self, block: Block) -> Adw.ActionRow:
-        row = Adw.ActionRow(
-            # An alias may contain & or <, which Adw.ActionRow parses as markup.
-            title=GLib.markup_escape_text(block.title),
+        # An alias, a hostname and a user name are all data: `Host a&b` is
+        # legal ssh_config, so the row must not parse them as markup.
+        row = text_row(
+            Adw.ActionRow,
+            title=block.title,
             subtitle=block.subtitle() or self._missing_subtitle(block),
             activatable=True,
         )

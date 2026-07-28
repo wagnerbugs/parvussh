@@ -31,6 +31,7 @@ from parvussh.data.keywords import (  # noqa: E402
 )
 from parvussh.i18n import t  # noqa: E402
 from parvussh.ui.dialogs import NewKeyDialog, display_path  # noqa: E402
+from parvussh.ui.markup import no_markup, text_row  # noqa: E402
 from parvussh.ui.popovers import KeyPickerPopover  # noqa: E402
 
 #: ssh accepts exactly these for a boolean option; anything else is not one.
@@ -96,7 +97,11 @@ class OptionRow:
         return self._entry(value)
 
     def _switch(self, value: str) -> Adw.SwitchRow:
-        row = Adw.SwitchRow(title=self.keyword.name, subtitle=self.keyword.description)
+        row = text_row(
+            Adw.SwitchRow,
+            title=self.keyword.name,
+            subtitle=self.keyword.description,
+        )
         # A newly added boolean starts off, matching ssh's own default. The
         # switch is right there if that is not what they wanted.
         row.set_active(value.strip().lower() == YES)
@@ -110,7 +115,8 @@ class OptionRow:
             # we do.
             values.append(value)
         self.model = Gtk.StringList.new(values)
-        row = Adw.ComboRow(
+        row = text_row(
+            Adw.ComboRow,
             title=self.keyword.name,
             subtitle=self.keyword.description,
             model=self.model,
@@ -121,7 +127,8 @@ class OptionRow:
         return row
 
     def _spin(self, value: str) -> Adw.SpinRow:
-        row = Adw.SpinRow.new_with_range(self.keyword.lo, self.keyword.hi, 1)
+        # Built by a constructor that takes no title, so no_markup is in time.
+        row = no_markup(Adw.SpinRow.new_with_range(self.keyword.lo, self.keyword.hi, 1))
         row.set_title(self.keyword.name)
         row.set_subtitle(self._hint())
         row.set_value(int(value.strip()) if value.strip() else self.keyword.lo)
@@ -129,7 +136,7 @@ class OptionRow:
         return row
 
     def _entry(self, value: str) -> Adw.EntryRow:
-        row = Adw.EntryRow(title=self.keyword.name)
+        row = text_row(Adw.EntryRow, title=self.keyword.name)
         row.set_text(value)
         row.set_tooltip_text(self._hint())
         row.connect("changed", self._changed)

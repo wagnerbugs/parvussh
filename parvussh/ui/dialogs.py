@@ -15,6 +15,7 @@ from gi.repository import Adw, GLib, Gtk  # noqa: E402
 from parvussh.core import keys  # noqa: E402
 from parvussh.core.tester import TestResult  # noqa: E402
 from parvussh.i18n import t  # noqa: E402
+from parvussh.ui.markup import text_row  # noqa: E402
 
 DIALOG_WIDTH = 460
 
@@ -31,17 +32,20 @@ class NewKeyDialog(Adw.Dialog):
         self.on_created = on_created
         self.toast = toast
 
-        self.name = Adw.EntryRow(title=t("newkey.field.name"))
+        self.name = text_row(Adw.EntryRow, title=t("newkey.field.name"))
         self.name.set_text(t("newkey.default_name"))
-        self.kind = Adw.ComboRow(
+        self.kind = text_row(
+            Adw.ComboRow,
             title=t("newkey.field.kind"),
             subtitle=t("newkey.field.kind_subtitle"),
             model=Gtk.StringList.new(list(keys.KEY_TYPES)),
         )
-        self.comment = Adw.EntryRow(title=t("newkey.field.comment"))
+        self.comment = text_row(Adw.EntryRow, title=t("newkey.field.comment"))
         self.comment.set_text(f"{GLib.get_user_name()}@{GLib.get_host_name()}")
-        self.passphrase = Adw.PasswordEntryRow(title=t("newkey.field.passphrase"))
-        self.confirm = Adw.PasswordEntryRow(title=t("newkey.field.confirm"))
+        self.passphrase = text_row(
+            Adw.PasswordEntryRow, title=t("newkey.field.passphrase")
+        )
+        self.confirm = text_row(Adw.PasswordEntryRow, title=t("newkey.field.confirm"))
 
         group = Adw.PreferencesGroup()
         for row in (self.name, self.kind, self.comment, self.passphrase, self.confirm):
