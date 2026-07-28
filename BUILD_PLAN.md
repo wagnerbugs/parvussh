@@ -135,24 +135,42 @@ feat(core): write config atomically with backup and ssh -G validation
 
 ## M3 — Option catalog
 
-- [ ] `parvussh/data/keywords.py` — `Keyword`, the 47 entries, `BY_NAME`,
-  `GROUPS`, `BASIC`, `get`, `canonical`, `search` (SPEC §4, amended by D3:
-  structure only, `description`/`example` are properties reading `t()`)
-- [ ] `parvussh/i18n/pt_br/keywords.py` — `kw.<Name>.desc` and
-  `kw.<Name>.example` for all 47, transcribed from SPEC §4
-- [ ] `tests/test_i18n.py` — `t()` falls back to the key, `set_locale` rejects
-  an unknown name, and every catalog entry has a non-empty description
-- [ ] `tests/test_keywords.py`:
+- [x] `parvussh/data/keywords.py` — `Keyword`, the **50** entries (SPEC said
+  47; its own list holds 50), `BY_NAME`, `GROUPS`, `BASIC`, `get`,
+  `for_option`, `canonical`, `search` (SPEC §4, amended by D3: structure only,
+  `description`/`example` are properties reading `t()`)
+- [x] `parvussh/i18n/pt_br/keywords.py` — `kw.<Name>.desc`, the optional
+  `kw.<Name>.example`, and the six `group.<key>` headings
+- [x] `tests/test_i18n.py` — `t()` falls back to the key, `set_locale` rejects
+  an unknown name, no key is defined twice across the three pt-BR modules, and
+  every `t("...")` literal in `ui/**` resolves
+- [x] `tests/test_keywords.py`:
   - `search("ServerA")` ranks `ServerAliveCountMax` and
   `ServerAliveInterval` first
-  - `search("chave")` returns the five auth-related options (the pt-BR
-  search test — see SPEC §4)
+  - `search("chave")` finds the five auth-related options SPEC §4 names, and
+  every result really does mention `chave` (see the correction below)
   - `BASIC` names never appear in results
-  - `exclude` removes already-used options
+  - `exclude` removes already-used options, whatever casing was typed
   - every `ENUM` has non-empty `values`; every `INT` has `lo < hi`
-  - every `group` is in `GROUPS`
+  - every `group` is in `GROUPS`, and every group has entries
+  - every catalog entry has a pt-BR description — the guard that stops the
+  structural and text catalogs from drifting apart
 
-**Gate:** `make test` green.
+**Gate:** `make test` green — 135 passed.
+
+**Two corrections to SPEC §4, made in the spec itself:**
+
+1. It said "47 entries" and then listed 50. All 50 ship; the count is pinned
+   by a test.
+2. It said `search("chave")` must return *exactly* five options. Its own
+   descriptions put `chave` in nine — `StrictHostKeyChecking`,
+   `UserKnownHostsFile`, `VisualHostKey` and `KexAlgorithms` too. Nine is the
+   better answer, so the test asserts the five are present rather than alone.
+
+**Added beyond spec:** search folds accents, so `sessao` finds `sessão`.
+
+**Mutation:** deleting one description from the pt-BR catalog — the exact
+mistake D3's two-file split makes possible — failed two tests.
 
 ```
 feat(data): add ssh option catalog with pt-BR descriptions

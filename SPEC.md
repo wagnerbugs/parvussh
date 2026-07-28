@@ -191,13 +191,28 @@ def search(query: str, exclude: set[str] | None = None) -> list[Keyword]:
 - Sort by `(rank, name)`. Empty query returns the whole catalog, rank 1.
 
 Because descriptions are in Portuguese, typing `chave` must return
-`IdentityFile`, `AddKeysToAgent`, `IdentitiesOnly`, `HostKeyAlgorithms`,
-`ForwardAgent`. Write a test asserting exactly this — it is the feature that
-makes the app feel like it speaks the user's language.
+`IdentityFile`, `AddKeysToAgent`, `IdentitiesOnly`, `HostKeyAlgorithms` and
+`ForwardAgent`. It is the feature that makes the app feel like it speaks the
+user's language.
+
+> **Corrected during M3.** This section originally said to assert *exactly*
+> those five. That contradicts the descriptions the same section specifies:
+> `chave` also appears in `StrictHostKeyChecking`, `UserKnownHostsFile`,
+> `VisualHostKey` and `KexAlgorithms`, so the honest result is nine. Returning
+> all nine is better — someone searching "chave" wants them. The test asserts
+> the five above are present and that every result really does mention `chave`.
+
+Search also folds accents, so `sessao` finds `sessão` and `conexao` finds
+`conexão`. Brazilian developers type without accents more often than with
+them, and a search that misses them reads as broken rather than strict.
 
 ### Initial catalog
 
-Ship these 47 entries. Descriptions are pt-BR and user-visible.
+Ship the entries below. Descriptions are pt-BR and user-visible.
+
+> **Corrected during M3.** This said "47 entries"; the list itself holds 50.
+> The list is authoritative and all 50 ship. `test_the_catalog_holds_every_option_the_spec_lists`
+> pins the count so the two cannot drift again.
 
 ```
 Conexão

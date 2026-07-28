@@ -133,7 +133,41 @@ idempotent write is invisible to a content check.
 
 `make test` → 96 passed. `parvussh/core` coverage 97%.
 
-**Next session starts with.** M3 — the option catalog and the pt-BR keyword
-descriptions. Two files move in step: `data/keywords.py` (structure) and
-`i18n/pt_br/keywords.py` (text), with a test asserting every catalog entry has
-a description so the two cannot drift.
+### M3 — option catalog
+
+`REF/keywords.py` was never handed over, so this was built from SPEC §4. Two
+places where the spec contradicts itself, both corrected in `SPEC.md`:
+
+- It says "47 entries" and then lists **50**. All 50 ship.
+- It says `search("chave")` must return *exactly* five options, and then
+  writes descriptions putting `chave` in **nine**. Nine is the better answer —
+  someone searching "chave" wants `StrictHostKeyChecking` and
+  `UserKnownHostsFile` too — so the test asserts the five it names are
+  present, plus that every result genuinely mentions `chave`.
+
+The split D3 asked for: `data/keywords.py` holds `Keyword(name, kind, values,
+lo, hi, group)` and nothing readable; `description` and `example` are
+properties resolving `t("kw.<Name>.desc")`. `search()` needed no change,
+because it reads the properties. The obvious risk is the two halves drifting —
+someone adds a catalog row and forgets the text — so
+`test_every_entry_has_a_description` asserts no description comes back looking
+like a bare key. Deleting one description fails it, confirmed.
+
+Group headings are keys too (`group.connection` → "Conexão"), so the six
+category names are translatable rather than baked into the table.
+
+**Added beyond spec:** `search()` folds accents through NFKD, so `sessao`
+finds `sessão` and `conexao` finds `conexão`. Typing without accents is the
+norm, and a search that misses them reads as broken, not strict.
+
+`tests/test_i18n.py` carries one test worth knowing about:
+`test_every_key_the_ui_asks_for_exists` greps `ui/**` for `t("...")` literals
+and fails if any key is missing from the catalog. It finds nothing today
+because `ui/` is empty; from M6 on it is the safety net that lets UI code use
+`t()` freely.
+
+`make test` → 135 passed.
+
+**Next session starts with.** M4 — `core/keys.py`. `REF/keys.py` was not handed
+over either, so build from SPEC §5, remembering D3: `generate()` raises a typed
+error instead of returning the pt-BR sentence the spec shows.
