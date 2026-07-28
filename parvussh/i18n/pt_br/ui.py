@@ -43,6 +43,7 @@ STRINGS: dict[str, str] = {
     "editor.test": "Testar",
     "editor.test_tooltip": "Tenta conectar sem salvar",
     "editor.more_tooltip": "Mais ações",
+    "editor.help_tooltip": "O que cada opção faz",
     "editor.empty.title": "Escolha uma conexão",
     "editor.empty.description": "Ou use o + para cadastrar a primeira.",
     "editor.group.connection": "Conexão",
@@ -160,6 +161,23 @@ STRINGS: dict[str, str] = {
     # -- option rows ------------------------------------------------------
     "rows.remove_tooltip": "Remover {name}",
     "rows.hint_with_example": "{description}  ex.: {example}",
+    # -- help dialog ------------------------------------------------------
+    "help.title": "Ajuda",
+    "help.page.options": "Opções",
+    "help.page.keys": "Chaves",
+    "help.page.about": "Como funciona",
+    "help.with_example": "{description}\nExemplo: {example}",
+    "help.with_values": "{description}\nValores: {values}",
+    # -- duplicate and delete ---------------------------------------------
+    "duplicate.alias": "{alias}-copia",
+    "duplicate.alias_numbered": "{alias}-copia-{number}",
+    "duplicate.done": "Conexão duplicada. Ajuste o apelido e salve.",
+    "delete.heading": "Excluir “{alias}”?",
+    "delete.body": (
+        "O bloco sai do arquivo assim que você confirmar. Uma cópia do config "
+        "anterior fica na mesma pasta, com a data no nome."
+    ),
+    "delete.done": "Conexão excluída.",
     # -- dialogs ----------------------------------------------------------
     "dialog.understood": "Entendi",
     "dialog.close": "Fechar",

@@ -117,12 +117,14 @@ parvussh/
 │   ├── __init__.py    t(), set_locale(), available_locales()
 │   └── pt_br/         ui.py, keywords.py, guide.py — the pt-BR catalog
 └── ui/              GTK4 + libadwaita only
-    ├── window.py      main window, split view, wiring
+    ├── app.py         Adw.Application entry point
+    ├── window.py      main window, split view, actions, wiring
     ├── sidebar.py     connection list
     ├── editor.py      the form
     ├── rows.py        one widget per option kind
-    ├── dialogs.py     help, new key, test result, confirmations
-    └── app.py         Adw.Application entry point
+    ├── popovers.py    add-option search, key picker
+    ├── dialogs.py     new key, test result
+    └── help.py        the help dialog and the guide pages
 ```
 
 **Hard rule:** `parvussh/core/**`, `parvussh/data/**` and `parvussh/i18n/**`

@@ -129,6 +129,14 @@ class Editor(Adw.NavigationPage):
         )
         box = Gtk.Box(spacing=6)
         box.append(
+            Gtk.Button(
+                icon_name="help-about-symbolic",
+                action_name="win.help",
+                tooltip_text=t("editor.help_tooltip"),
+                css_classes=["flat"],
+            )
+        )
+        box.append(
             Gtk.MenuButton(
                 icon_name="list-add-symbolic",
                 popover=self.add_popover,

@@ -377,12 +377,17 @@ feat(ui): render each ssh option with a widget matching its type
 
 ## M10 — Add-option popover
 
-- [ ] `AddOptionPopover` per SPEC §7: search entry, filtered list, Enter picks
+- [x] `AddOptionPopover` per SPEC §7: search entry, filtered list, Enter picks
   the first match, used options excluded, focus on show
-- [ ] GUI test: typing `ServerA` leaves `ServerAliveInterval` in the list;
+- [x] GUI test: typing `ServerA` leaves `ServerAliveInterval` in the list;
   activating it adds the row; reopening the popover no longer offers it
 
 **Gate:** type `ServerA`, press Enter, the row appears focused and ready.
+
+It lives in the new `parvussh/ui/popovers.py`, which M11's key picker shares.
+The `used` set is passed as a **callable**: what is on the form changes with
+every add and remove, and a cached copy goes stale with no symptom until the
+popover offers an option the user already has.
 
 ```
 feat(ui): add options through a searchable popover
@@ -392,17 +397,24 @@ feat(ui): add options through a searchable popover
 
 ## M11 — Identity picker and key creation
 
-- [ ] Key picker popover on `IdentityFile` rows, rebuilt on every `show`
-- [ ] `Gtk.FileDialog` fallback starting at `~/.ssh`, storing the `~/...` form
-- [ ] `NewKeyDialog` — name, type, comment, passphrase + confirmation,
+- [x] Key picker popover on `IdentityFile` rows, rebuilt on every `show`
+- [x] `Gtk.FileDialog` fallback starting at `~/.ssh`, storing the `~/...` form
+- [x] `NewKeyDialog` — name, type, comment, passphrase + confirmation,
   mismatch and empty-name validation, success toast, and it fills the
   originating row
-- [ ] GUI test with a fake `ssh-keygen`: creating a key calls the expected
+- [x] GUI test with a fake `ssh-keygen`: creating a key calls the expected
   argv and writes the path back into the row
-- [ ] GUI test: mismatched passphrases block creation
+- [x] GUI test: mismatched passphrases block creation
 
 **Gate:** create a real key on the developer machine, confirm it appears in the
-picker immediately afterwards without restarting the app.
+picker immediately afterwards without restarting the app. Covered by
+`test_the_picker_is_rebuilt_every_time_it_opens`, which adds a key after the
+first open and asserts it appears on the second — **still worth doing by hand
+once**, since the test fakes `ssh-keygen`.
+
+The picker is only attached to a *catalogued* `IdentityFile` row. A row that
+fell back to plain text (M9) keeps its odd value and gets no picker; offering
+one would invite overwriting exactly what we went out of our way to preserve.
 
 ```
 feat(ui): pick an existing key or create a new one inline
@@ -412,15 +424,20 @@ feat(ui): pick an existing key or create a new one inline
 
 ## M12 — Test button
 
-- [ ] Worker thread + `GLib.idle_add`, a persistent toast while running
-- [ ] Result `Adw.AlertDialog` with the verdict and a collapsed expander
+- [x] Worker thread + `GLib.idle_add`, a persistent toast while running
+- [x] Result `Adw.AlertDialog` with the verdict and a collapsed expander
   holding the raw ssh output in a monospace `Gtk.TextView`
-- [ ] Wildcard aliases are refused with the pt-BR message
-- [ ] GUI test with a fake `ssh` that exits 255 printing `Permission denied`:
+- [x] Wildcard aliases are refused with the pt-BR message
+- [x] GUI test with a fake `ssh` that exits 255 printing `Permission denied`:
   the dialog reports success
 
 **Gate:** point a connection at a real VPS and at a wrong port; both verdicts
-read correctly and the UI never freezes.
+read correctly and the UI never freezes. **Still to be done by hand** — the
+suite covers the interpretation and the threading, not a real network.
+
+The config handed to ssh is built from the *widgets*, not from the block, so
+what gets tested is what is on screen. Testing before committing anything to
+disk is the entire point of the feature.
 
 ```
 feat(ui): test a connection before saving it
@@ -430,16 +447,28 @@ feat(ui): test a connection before saving it
 
 ## M13 — Help, guide, and the remaining actions
 
-- [ ] `parvussh/data/guide.py` — the six section keys in order and
+- [x] `parvussh/data/guide.py` — the six section keys in order and
   `ABOUT_CONFIG`; the prose itself goes in `parvussh/i18n/pt_br/guide.py`
   (SPEC §8, amended by D3)
-- [ ] `HelpDialog` — `Adw.PreferencesDialog` with the three pages and search
-- [ ] `Duplicar` and `Excluir` with confirmation, toasts, sidebar refresh
-- [ ] GUI test: the help dialog builds and contains a row per catalog entry
-- [ ] GUI test: deleting a host removes the block from the file and leaves the
+- [x] `HelpDialog` — `Adw.PreferencesDialog` with the three pages and search,
+  in its own `parvussh/ui/help.py`
+- [x] `Duplicar` and `Excluir` with confirmation, toasts, sidebar refresh
+- [x] GUI test: the help dialog builds and contains a row per catalog entry
+- [x] GUI test: deleting a host removes the block from the file and leaves the
   others byte-identical
 
-**Gate:** press `?`, search `Server`, find the option and its description.
+**Gate:** press `?`, search `Server`, find the option and its description —
+the render in `scratchpad/m13-help.png` shows the three pages with search
+enabled. 185 gui tests pass.
+
+**Added beyond spec:** `Duplicar` never reuses an alias. The prototype always
+appended `-copia`, so duplicating twice produced two identical aliases — legal
+ssh_config, but the second is dead text since the first wins every lookup.
+`free_alias()` counts up to `-copia-2`.
+
+The guide's markup is checked twice: balanced tags by string count, and by
+actually running `Pango.parse_markup` over every section. An unclosed `<tt>`
+would otherwise show raw markup to the user.
 
 ```
 feat(ui): add the help dialog, key guide, duplicate and delete actions

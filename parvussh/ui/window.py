@@ -26,6 +26,7 @@ from parvussh.core.writer import ConfigError  # noqa: E402
 from parvussh.i18n import t  # noqa: E402
 from parvussh.ui.dialogs import TestResultDialog  # noqa: E402
 from parvussh.ui.editor import Editor  # noqa: E402
+from parvussh.ui.help import HelpDialog  # noqa: E402
 from parvussh.ui.sidebar import Sidebar  # noqa: E402
 
 WINDOW_SIZE = (1020, 700)
@@ -166,7 +167,7 @@ class ParvuSshWindow(Adw.ApplicationWindow):
     # -- the actions themselves -------------------------------------------
 
     def show_help(self) -> None:
-        """Filled in at M13, once `data/guide.py` exists."""
+        HelpDialog().present(self)
 
     def new_host(self) -> None:
         """Append an empty connection and put the cursor in its alias field."""
@@ -240,10 +241,64 @@ class ParvuSshWindow(Adw.ApplicationWindow):
         threading.Thread(target=work, daemon=True).start()
 
     def duplicate_current(self) -> None:
-        """Filled in at M13."""
+        """Copy the connection under a free alias, left unsaved to be renamed."""
+        if self.current is None or self.config is None:
+            return
+        copy = self.config.duplicate(self.current, self.free_alias(self.current.title))
+        self.refresh_list(select=copy)
+        self.toast(t("duplicate.done"))
+
+    def free_alias(self, base: str) -> str:
+        """`vps-copia`, then `vps-copia-2`, so a duplicate never shadows a host.
+
+        Two blocks with the same alias is legal ssh_config but useless: the
+        first one wins every lookup and the second is dead text.
+        """
+        taken = {block.title for block in self.hosts}
+        candidate = t("duplicate.alias", alias=base)
+        attempt = 2
+        while candidate in taken:
+            candidate = t("duplicate.alias_numbered", alias=base, number=attempt)
+            attempt += 1
+        return candidate
 
     def delete_current(self) -> None:
-        """Filled in at M13."""
+        """Remove the connection, after asking, and write the file immediately."""
+        if self.current is None or self.config is None:
+            return
+        block = self.current
+
+        dialog = Adw.AlertDialog(
+            heading=t("delete.heading", alias=block.title), body=t("delete.body")
+        )
+        dialog.add_response("cancel", t("dialog.cancel"))
+        dialog.add_response("delete", t("menu.delete"))
+        dialog.set_response_appearance("delete", Adw.ResponseAppearance.DESTRUCTIVE)
+        dialog.set_close_response("cancel")
+
+        def answered(_dialog: Adw.AlertDialog, response: str) -> None:
+            if response != "delete":
+                return
+            self.remove_block(block)
+
+        dialog.connect("response", answered)
+        dialog.present(self)
+
+    def remove_block(self, block: Block) -> None:
+        """The delete itself, split out so a test need not drive the dialog."""
+        if self.config is None:
+            return
+        self.config.remove(block)
+        try:
+            self.config.save()
+        except (ConfigError, OSError) as error:
+            self.show_message(t("save.failed.heading"), str(error))
+            self.reload()  # the in-memory set no longer matches the file
+            return
+        self.editor.mark_clean()
+        self.refresh_list()
+        self._show_block(None)
+        self.toast(t("delete.done"))
 
     # -- talking to the user ----------------------------------------------
 

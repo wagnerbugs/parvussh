@@ -362,4 +362,71 @@ The M8 carry-over in `Editor.apply()` is gone, replaced by the option rows as
 planned. The test that guarded it was **reworded, not deleted** —
 `test_an_extra_option_and_its_comment_survive_a_save`.
 
-**Next session starts with.** M10 — the add-option popover.
+### M10 — the add-option popover
+
+`ui/popovers.py` is new and M11's key picker shares it.
+
+The `used` set is a **callable**, not a value. What is on the form changes with
+every add and remove; a cached copy goes stale with no symptom until the
+popover offers something the user already has.
+
+Two of my own test assertions were wrong, both instructive. `search("ServerA")`
+also matches `TCPKeepAlive`, because its description says "Diferente de
+ServerAlive." on purpose — search covers descriptions, which is the entire
+reason they are written in Portuguese. And the popover only rebuilds when it
+opens, so a fixture has to call `refresh()` the way `_on_show` does.
+
+### M11 — key picker and key creation
+
+The picker rebuilds on every `show` and caches nothing, because the one case a
+cache would break is exactly the one that matters: a key created a minute ago
+in the same session.
+
+Picking writes the `~/...` form. An absolute `/home/wagner/.ssh/id_ed25519`
+stops working the moment the config is copied to another machine or another
+user, which is a thing people do with dotfiles repositories.
+
+The picker is attached only to a **catalogued** `IdentityFile` row. A row that
+fell back to plain text under M9's rule keeps its odd value and gets no
+picker — offering one would invite overwriting precisely what we preserved.
+
+`Adw.ActionRow` emits `activated` itself. Connecting per row rather than to the
+list box's `row-activated` keeps the handler reachable from a test without
+synthesising a click. Worth preferring generally.
+
+### M12 — the connection test
+
+A worker thread runs ssh and `GLib.idle_add` delivers the verdict. The
+persistent toast matters: ssh can sit for 25 seconds, and a frozen window is
+indistinguishable from a crashed one.
+
+`Editor.config_text()` builds the config from the **widgets**, not the block.
+Testing what is on screen before saving is the whole feature.
+
+`FakeBin.uninstall()` is new. The `window` fixture has to install a working
+`ssh` just to load a config, so the "openssh-client is not installed" case has
+to take it back off `PATH` afterwards. That is also why
+`test_a_missing_ssh_is_reported` failed the first time — a good reminder that a
+fixture's setup is part of the test's premises.
+
+### M13 — help, guide, duplicate, delete
+
+`Duplicar` no longer reuses an alias. The prototype always appended `-copia`,
+so duplicating twice gave two blocks with the same alias: legal ssh_config, but
+the second is dead text because the first wins every lookup. `free_alias()`
+counts up to `-copia-2`.
+
+`delete_current()` opens the confirmation; `remove_block()` does the work. The
+split is what lets a test assert the deletion without driving a dialog, and it
+keeps "ask" separate from "do".
+
+The guide's markup is verified two ways: tag counts, and actually running
+`Pango.parse_markup` over every section. An unclosed `<tt>` would otherwise
+render as raw markup in front of the user, and no other test would notice.
+
+`ui/help.py` is its own module rather than more of `dialogs.py`, which was
+already at ~175 lines.
+
+**The interface is complete.** M14 (packaging and docs) and M15 (CI) are what
+remain, plus the two gates that need a human: pointing `Testar` at a real VPS,
+and creating a real key and seeing it appear in the picker.
