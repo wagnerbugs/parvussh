@@ -11,16 +11,27 @@ not fit its widget falls back to plain text, where anything survives
 from __future__ import annotations
 
 from collections.abc import Callable
+from pathlib import Path
 
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Adw, Gtk  # noqa: E402
+from gi.repository import Adw, Gio, GLib, Gtk  # noqa: E402
 
-from parvussh.data.keywords import BOOL, ENUM, INT, Keyword  # noqa: E402
+from parvussh.core.keys import ssh_dir  # noqa: E402
+from parvussh.data.keywords import (  # noqa: E402
+    BOOL,
+    ENUM,
+    IDENTITY,
+    INT,
+    PATH,
+    Keyword,
+)
 from parvussh.i18n import t  # noqa: E402
+from parvussh.ui.dialogs import NewKeyDialog, display_path  # noqa: E402
+from parvussh.ui.popovers import KeyPickerPopover  # noqa: E402
 
 #: ssh accepts exactly these for a boolean option; anything else is not one.
 YES, NO = "yes", "no"
@@ -58,11 +69,13 @@ class OptionRow:
         comments: list[str] | None = None,
         on_change: Callable[[], None] | None = None,
         on_remove: Callable[[OptionRow], None] | None = None,
+        toast: Callable[[str], None] | None = None,
     ) -> None:
         self.keyword = keyword
         self.comments = list(comments or [])
         self.on_change = on_change
         self.on_remove = on_remove
+        self.toast = toast
         # False when the value forced a fallback to a text row; `value()` reads
         # the widget that was actually built, not the one the kind implies.
         self.typed = fits_widget(keyword, value)
@@ -120,7 +133,65 @@ class OptionRow:
         row.set_text(value)
         row.set_tooltip_text(self._hint())
         row.connect("changed", self._changed)
+        # Only a catalogued IdentityFile gets the key picker; a row that fell
+        # back to text keeps whatever odd value it is holding.
+        if self.typed and self.keyword.kind == IDENTITY:
+            row.add_suffix(self._key_button())
+        elif self.typed and self.keyword.kind == PATH:
+            row.add_suffix(self._file_button())
         return row
+
+    # -- pickers -----------------------------------------------------------
+
+    def _key_button(self) -> Gtk.MenuButton:
+        self.key_popover = KeyPickerPopover(
+            on_pick=self.set_text,
+            on_create=self.create_key,
+            on_browse=self.browse,
+        )
+        return Gtk.MenuButton(
+            icon_name="dialog-password-symbolic",
+            valign=Gtk.Align.CENTER,
+            tooltip_text=t("keypicker.tooltip"),
+            css_classes=["flat", "circular"],
+            popover=self.key_popover,
+        )
+
+    def _file_button(self) -> Gtk.Button:
+        button = Gtk.Button(
+            icon_name="document-open-symbolic",
+            valign=Gtk.Align.CENTER,
+            tooltip_text=t("filepicker.tooltip"),
+            css_classes=["flat", "circular"],
+        )
+        button.connect("clicked", lambda *_a: self.browse())
+        return button
+
+    def set_text(self, value: str) -> None:
+        """Put a chosen path into the entry, as if it had been typed."""
+        self.row.set_text(value)
+
+    def create_key(self) -> None:
+        dialog = NewKeyDialog(on_created=self.set_text, toast=self.toast)
+        dialog.present(self.row)
+
+    def browse(self) -> None:
+        """Pick a file, storing the `~/...` form so the config stays portable."""
+        dialog = Gtk.FileDialog(title=t("filepicker.title", name=self.keyword.name))
+        start = ssh_dir()
+        if start.is_dir():
+            dialog.set_initial_folder(Gio.File.new_for_path(str(start)))
+
+        def chosen(source: Gtk.FileDialog, result: object) -> None:
+            try:
+                chosen_file = source.open_finish(result)
+            except GLib.Error:
+                return  # the user cancelled; nothing to report
+            path = chosen_file.get_path()
+            if path:
+                self.set_text(display_path(Path(path)))
+
+        dialog.open(self.row.get_root(), None, chosen)
 
     def _hint(self) -> str:
         """Description, plus an example when the catalog offers one."""

@@ -27,9 +27,14 @@ BASIC_LOWER = {name.lower() for name in BASIC}
 class Editor(Adw.NavigationPage):
     """The connection form, its empty state, and the unsaved-changes flag."""
 
-    def __init__(self, on_dirty: Callable[[], None] | None = None) -> None:
+    def __init__(
+        self,
+        on_dirty: Callable[[], None] | None = None,
+        toast: Callable[[str], None] | None = None,
+    ) -> None:
         super().__init__(title=t("editor.title"))
         self.on_dirty = on_dirty
+        self.toast = toast
         self.block: Block | None = None
         self.dirty = False
         # Set while fields are being filled from a block: a programmatic
@@ -149,6 +154,7 @@ class Editor(Adw.NavigationPage):
             comments,
             on_change=self.mark_dirty,
             on_remove=self.remove_option,
+            toast=self.toast,
         )
         self.options.append(option)
         self.extras.add(option.row)

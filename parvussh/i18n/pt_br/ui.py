@@ -75,6 +75,38 @@ STRINGS: dict[str, str] = {
     "addoption.tooltip": "Adicionar opção",
     "addoption.placeholder": "Digite: ServerAlive…",
     "addoption.no_matches": "Nenhuma opção com esse nome.",
+    # -- key picker -------------------------------------------------------
+    "keypicker.tooltip": "Escolher uma chave de ~/.ssh",
+    "keypicker.empty": "Nenhuma chave em ~/.ssh ainda.",
+    "keypicker.create": "Criar chave…",
+    "keypicker.browse": "Procurar arquivo…",
+    "keypicker.summary": "{kind} · {bits} bits · {comment}",
+    "keypicker.summary_no_comment": "{kind} · {bits} bits",
+    "keypicker.undescribed": "Não deu para ler os detalhes desta chave.",
+    "filepicker.tooltip": "Procurar arquivo",
+    "filepicker.title": "Escolher {name}",
+    # -- new key dialog ---------------------------------------------------
+    "newkey.title": "Criar chave",
+    "newkey.create": "Criar chave",
+    "newkey.default_name": "id_ed25519_novo",
+    "newkey.field.name": "Nome do arquivo",
+    "newkey.field.kind": "Tipo",
+    "newkey.field.kind_subtitle": "ed25519 é a escolha recomendada",
+    "newkey.field.comment": "Comentário",
+    "newkey.field.passphrase": "Senha da chave",
+    "newkey.field.confirm": "Repita a senha",
+    "newkey.note": (
+        "A chave é gravada em ~/.ssh. Deixar a senha em branco cria uma chave "
+        "sem proteção."
+    ),
+    "newkey.created": "Chave criada em {path}",
+    "newkey.failed.heading": "Não deu para criar a chave",
+    "newkey.error.empty_name": "Dê um nome ao arquivo da chave.",
+    "newkey.error.mismatch": "As duas senhas não são iguais.",
+    "newkey.error.exists": ("Já existe um arquivo em {path}. Escolha outro nome."),
+    "newkey.error.no_tool": (
+        "O ssh-keygen não foi encontrado. Instale o pacote openssh-client."
+    ),
     # -- option rows ------------------------------------------------------
     "rows.remove_tooltip": "Remover {name}",
     "rows.hint_with_example": "{description}  ex.: {example}",

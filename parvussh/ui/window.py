@@ -61,7 +61,7 @@ class ParvuSshWindow(Adw.ApplicationWindow):
         self.set_content(self.toasts)
 
         self.sidebar = Sidebar(on_select=self._on_block_selected)
-        self.editor = Editor()
+        self.editor = Editor(toast=self.toast)
 
         self.split.set_sidebar(self.sidebar)
         self.split.set_content(self.editor)
