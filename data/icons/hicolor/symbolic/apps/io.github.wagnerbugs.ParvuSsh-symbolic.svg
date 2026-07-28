@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ParvuSsh symbolic icon, for window lists and notifications.
+
+  16x16, single colour, recoloured by GTK. The bow is a stroked circle rather
+  than a masked disc: at this size a mask leaves the hole one pixel wide and
+  the key stops reading as a key.
+
+  SPDX-License-Identifier: GPL-3.0-or-later
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <g fill="#222222">
+    <circle cx="5" cy="8" r="2.4" fill="none" stroke="#222222" stroke-width="2"/>
+    <rect x="7.5" y="7" width="7.5" height="2" rx="1"/>
+    <rect x="10.4" y="9" width="1.8" height="2.4" rx="0.6"/>
+    <rect x="13.2" y="9" width="1.8" height="3.4" rx="0.6"/>
+  </g>
+</svg>

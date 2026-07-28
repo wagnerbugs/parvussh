@@ -40,10 +40,7 @@ include = ["parvussh*"]
 [tool.ruff]
 line-length = 88
 target-version = "py311"
-# Prototype code from the exploration phase. Kept for reference while porting,
-# deleted at M14; it predates the style rules and does not get to fail lint.
 extend-exclude = [
-    "REF",
     # ruff formats python blocks inside markdown. The aligned comments in
     # SPEC.md are there to be read, not to compile.
     "*.md",

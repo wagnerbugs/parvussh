@@ -431,6 +431,64 @@ already at ~175 lines.
 remain, plus the two gates that need a human: pointing `Testar` at a real VPS,
 and creating a real key and seeing it appear in the picker.
 
+## 2026-07-28 — Session 2: a real bug, then packaging
+
+### The markup bug, and why nothing caught it
+
+Reported from an actual run: opening a connection with `RemoteCommand cd
+/srv/app && bash -l` printed *"Failed to set text ... from markup"* and
+rendered nothing.
+
+**Every `Adw.PreferencesRow` parses its title and subtitle as Pango markup by
+default**, and so does `Adw.PreferencesGroup`. Almost everything we put in them
+is data — a host alias, a user name, an option description, an example command
+— and any of those may contain `&` or `<`.
+
+Two things worth carrying:
+
+1. **Order matters.** `Adw.ActionRow(title=...)` parses during *construction*,
+   so calling `set_use_markup(False)` afterwards is too late: the warning has
+   already fired and the label is already empty. `ui/markup.py` exposes
+   `text_row()`, which builds the widget, disables markup, and only then puts
+   the text in. Use it for every row.
+2. **The sidebar had the wrong half of the fix.** It escaped its *title* by
+   hand and left the subtitle — the user's hostname and user name — exposed.
+   Escaping is also the wrong tool once markup is off: it would show a literal
+   `&amp;`. Rows turn markup off; only `Adw.PreferencesGroup`, which has no
+   switch, gets escaped.
+
+**Why the suite missed it.** GTK reports failed markup, missing icons and
+broken widget trees on stderr and then carries on. Every gui test stayed green
+while the interface was visibly broken. The `gtk` fixture now routes GLib's log
+stream into a list via `GLib.log_set_writer_func` and fails any test that
+provoked a WARNING, CRITICAL or ERROR. It found a second, smaller thing
+immediately: the key-creation tests were closing a dialog nobody had presented.
+
+That guard is probably the most valuable thing added this session. Any GTK
+misuse now fails a test instead of scrolling past.
+
+### M14 — packaging
+
+- **Icon.** A key, drawn by hand: `data/icons/hicolor/scalable/apps/` for the
+  app icon and `symbolic/apps/` for the 16px monochrome one. The symbolic
+  version uses a *stroked* circle for the bow rather than a masked disc — at
+  16px a mask leaves the hole one pixel wide and it stops reading as a key.
+- **Seeing SVGs.** `Gdk.Texture.new_from_filename` refuses SVG, and so does
+  `GdkPixbuf` here. `gi.repository.Rsvg` works and is installed; the render
+  helper in the scratchpad uses it to lay several sizes side by side, which is
+  how you check an icon actually survives being small.
+- **`make install-user`** installs the launcher and icons into
+  `~/.local/share` with no `sudo`, and rewrites `Exec=` to point at the
+  checkout's venv. `make uninstall-user` undoes it.
+- **`tools/screenshot.py`** regenerates the README images. A `Gtk.Popover`
+  renders into its own surface, so a `Gtk.WidgetPaintable` of the window never
+  sees it — dialogs work, popovers do not. The shots are of a dialog and two
+  window states for that reason.
+- **`Categories` drops `Utility`**, against the build plan:
+  `desktop-file-validate` warns that `Network` and `Utility` are both main
+  categories, so the app would appear twice in the menu.
+- **`REF/` is gone.** Everything was ported, and git keeps the history.
+
 ### Known deviation: two files are over the size guideline
 
 `CLAUDE.md` §3 says a file past ~250 lines is usually two ideas sharing a name.

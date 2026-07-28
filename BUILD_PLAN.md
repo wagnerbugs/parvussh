@@ -478,23 +478,44 @@ feat(ui): add the help dialog, key guide, duplicate and delete actions
 
 ## M14 — Packaging and documentation
 
-- [ ] `data/io.github.wagnerbugs.ParvuSsh.desktop` — pt-BR `Name`, `Comment`,
-  `Keywords`; `Categories=Network;RemoteAccess;Utility;`
-- [ ] `data/io.github.wagnerbugs.ParvuSsh.metainfo.xml` — AppStream metadata,
+- [x] `data/io.github.wagnerbugs.ParvuSsh.desktop` — pt-BR `Comment` and
+  `Keywords`; `Categories=Network;RemoteAccess;`
+- [x] `data/io.github.wagnerbugs.ParvuSsh.metainfo.xml` — AppStream metadata,
   pt-BR summary and description, `project_license` `GPL-3.0-or-later`
-- [ ] An app icon (symbolic SVG is fine for v1)
-- [ ] `README.md` in **pt-BR**: what it does, screenshots, the config contract
+- [x] An app icon — a key, in `scalable/` and `symbolic/`. `ui/app.py` adds the
+  source tree to the icon search path, so a clone shows the right icon without
+  being installed.
+- [x] `README.md` in **pt-BR**: what it does, screenshots, the config contract
   (CLAUDE.md §4, stated plainly for users), install instructions, the
   philosophy section, the non-goals list, and the two documented
   limitations (`ssh-keygen` passphrase in `ps`, read-only `Match` blocks)
-- [ ] `CONTRIBUTING.md` in **English**: the language policy, how to add a
-  catalog option in one line, how to run the tests, and the non-goals list
-  restated so nobody wastes an afternoon
-- [ ] `.github/ISSUE_TEMPLATE/feature_request.md` with a checkbox: "I have read
+- [x] `CONTRIBUTING.md` in **English**: the language policy, how to add a
+  catalog option, how to run the tests, and the non-goals list restated so
+  nobody wastes an afternoon
+- [x] `.github/ISSUE_TEMPLATE/feature_request.md` with a checkbox: "I have read
   the non-goals list and this request is not on it"
-- [ ] `CHANGELOG.md` — Keep a Changelog format, `0.1.0` entry
+- [x] `CHANGELOG.md` — Keep a Changelog format, `0.1.0` entry
+- [x] `make install-user` / `uninstall-user` — puts the launcher and icons in
+  `~/.local/share` with no `sudo`, rewriting `Exec=` to point at the checkout
+- [x] `tools/screenshot.py` and `make screenshots`, so the README images can be
+  regenerated instead of going stale
+- [x] `tests/test_packaging.py` — filenames match `APP_ID`, the metainfo `id`
+  and release version agree with the package, the icons parse, and the literal
+  `OWNER` appears nowhere
+- [x] `REF/` and `REFERENCE_README.md` deleted; everything was ported and git
+  keeps the history
 
 **Gate:** a fresh clone plus `make setup && make run` works on a clean machine.
+Still to be confirmed on a *second* machine — this one has the toolchain
+already.
+
+**Departure from the plan:** `Categories` drops `Utility`.
+`desktop-file-validate` warns that `Network` and `Utility` are both main
+categories, so the app would appear twice in the menu. `RemoteAccess` is a
+subcategory of `Network`, which is the accurate placement.
+
+`appstreamcli validate` passes apart from three `url-not-reachable` warnings —
+the GitHub repository does not exist yet. They clear once it does.
 
 ```
 docs: add readme, contributing guide, changelog and desktop metadata

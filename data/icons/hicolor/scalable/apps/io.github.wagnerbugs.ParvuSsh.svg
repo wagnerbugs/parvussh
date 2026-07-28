@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ParvuSsh application icon.
+
+  A key, because that is what SSH means to the person using this app, on the
+  rounded square GNOME expects. Deliberately geometric: it has to stay
+  readable at 32px in a dock and at 16px in a window list.
+
+  SPDX-License-Identifier: GPL-3.0-or-later
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="plate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5b7cfa"/>
+      <stop offset="1" stop-color="#3a48c8"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <!-- The bow's hole shows the plate through it, not a painted circle. -->
+    <mask id="bow-hole">
+      <rect x="0" y="0" width="128" height="128" fill="#ffffff"/>
+      <circle cx="47" cy="64" r="8.5" fill="#000000"/>
+    </mask>
+  </defs>
+
+  <rect x="8" y="8" width="112" height="112" rx="27" fill="url(#plate)"/>
+  <rect x="8" y="8" width="112" height="112" rx="27" fill="url(#sheen)"/>
+
+  <g mask="url(#bow-hole)" fill="#ffffff">
+    <circle cx="47" cy="64" r="20"/>
+    <rect x="62" y="59" width="42" height="10" rx="5"/>
+    <rect x="79" y="68" width="8" height="10" rx="3"/>
+    <rect x="93" y="68" width="8" height="15" rx="3"/>
+  </g>
+</svg>

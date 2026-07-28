@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<component type="desktop-application">
+  <id>io.github.wagnerbugs.ParvuSsh</id>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <name>ParvuSsh</name>
+  <summary>Gerencie suas conexões SSH sem sair do ~/.ssh/config</summary>
+  <summary xml:lang="pt_BR">Gerencie suas conexões SSH sem sair do ~/.ssh/config</summary>
+
+  <description>
+    <p>
+      O ParvuSsh lê e escreve o seu arquivo ~/.ssh/config de verdade. Não há
+      banco de dados paralelo, formato proprietário nem etapa de importação:
+      o que você vê no aplicativo é o que está no arquivo, e o que você salva
+      continua funcionando no terminal, no scp, no rsync e no Git.
+    </p>
+    <p>
+      Ele foi feito para quem cuida de alguns servidores e cansou de abrir o
+      config num editor de texto para lembrar qual apelido usou. Os campos
+      levam o nome real das opções do OpenSSH, com uma explicação em português
+      ao lado — dá para procurar no manual exatamente o que aparece na tela.
+    </p>
+    <p>Principais recursos:</p>
+    <ul>
+      <li>Lista, filtra e edita as conexões do seu ~/.ssh/config</li>
+      <li>Catálogo de 50 opções do SSH, buscáveis por nome ou pelo que fazem</li>
+      <li>Cria chaves ed25519, ecdsa ou rsa e escolhe qual usar em cada conexão</li>
+      <li>Testa a conexão antes de salvar, e explica em português o que deu errado</li>
+      <li>Guia passo a passo de como criar e instalar uma chave num servidor</li>
+      <li>Backup datado antes de cada gravação, e validação com ssh -G</li>
+    </ul>
+    <p>
+      Blocos que você não editou voltam para o arquivo byte por byte, com
+      comentários, indentação e opções desconhecidas intactos.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">io.github.wagnerbugs.ParvuSsh.desktop</launchable>
+
+  <developer id="io.github.wagnerbugs">
+    <name>wagnerbugs</name>
+  </developer>
+
+  <url type="homepage">https://github.com/wagnerbugs/parvussh</url>
+  <url type="bugtracker">https://github.com/wagnerbugs/parvussh/issues</url>
+  <url type="vcs-browser">https://github.com/wagnerbugs/parvussh</url>
+
+  <supports>
+    <control>keyboard</control>
+    <control>pointing</control>
+  </supports>
+
+  <requires>
+    <display_length compare="ge">768</display_length>
+  </requires>
+
+  <!-- No network of its own, no accounts, no telemetry. -->
+  <content_rating type="oars-1.1" />
+
+  <releases>
+    <release version="0.1.0" date="2026-07-28">
+      <description>
+        <p>Primeira versão.</p>
+      </description>
+    </release>
+  </releases>
+</component>
