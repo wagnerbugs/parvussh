@@ -8,6 +8,7 @@ the words.
 
 from __future__ import annotations
 
+import threading
 from pathlib import Path
 
 import gi
@@ -15,13 +16,15 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Adw, Gio  # noqa: E402
+from gi.repository import Adw, Gio, GLib  # noqa: E402
 
 from parvussh import APP_NAME  # noqa: E402
-from parvussh.core.models import Block  # noqa: E402
+from parvussh.core import tester  # noqa: E402
+from parvussh.core.models import WILDCARD_CHARS, Block  # noqa: E402
 from parvussh.core.store import ConfigSet  # noqa: E402
 from parvussh.core.writer import ConfigError  # noqa: E402
 from parvussh.i18n import t  # noqa: E402
+from parvussh.ui.dialogs import TestResultDialog  # noqa: E402
 from parvussh.ui.editor import Editor  # noqa: E402
 from parvussh.ui.sidebar import Sidebar  # noqa: E402
 
@@ -52,6 +55,7 @@ class ParvuSshWindow(Adw.ApplicationWindow):
 
         self.config: ConfigSet | None = None
         self.current: Block | None = None
+        self.last_test_result: tester.TestResult | None = None
 
         self.toasts = Adw.ToastOverlay()
         self.split = Adw.NavigationSplitView(
@@ -205,7 +209,35 @@ class ParvuSshWindow(Adw.ApplicationWindow):
         return True
 
     def test_current(self) -> None:
-        """Filled in at M12."""
+        """Try to connect using the form as it stands, without saving first."""
+        if self.current is None:
+            return
+        alias = self.editor.alias()
+        if not alias:
+            self.toast(t("test.error.no_alias"))
+            return
+        if any(char in alias for char in WILDCARD_CHARS):
+            # `ssh *` is not a thing; there is no single server to reach.
+            self.toast(t("test.error.wildcard"))
+            return
+
+        config_text = self.editor.config_text()
+        running = Adw.Toast(title=t("test.running", alias=alias), timeout=0)
+        self.toasts.add_toast(running)
+
+        def work() -> None:
+            result = tester.run(alias, config_text)
+            GLib.idle_add(finish, result)
+
+        def finish(result: tester.TestResult) -> bool:
+            running.dismiss()
+            self.last_test_result = result
+            TestResultDialog(result).present(self)
+            return False  # GLib.idle_add: run once
+
+        # A worker thread, because ssh can sit for 25 seconds and a frozen
+        # window is indistinguishable from a crashed one.
+        threading.Thread(target=work, daemon=True).start()
 
     def duplicate_current(self) -> None:
         """Filled in at M13."""

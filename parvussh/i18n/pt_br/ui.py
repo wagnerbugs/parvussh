@@ -107,6 +107,56 @@ STRINGS: dict[str, str] = {
     "newkey.error.no_tool": (
         "O ssh-keygen não foi encontrado. Instale o pacote openssh-client."
     ),
+    # -- connection test --------------------------------------------------
+    # One title/detail pair per status in parvussh/core/tester.py. Core hands
+    # back a code; the wording is here (docs/DECISIONS.md D3).
+    "test.running": "Testando {alias}…",
+    "test.output_label": "Saída do ssh",
+    "test.error.no_alias": "Informe o apelido antes de testar.",
+    "test.error.wildcard": "Blocos com curinga não podem ser testados direto.",
+    "test.auth.title": "Conectado",
+    "test.auth.detail": (
+        "Login concluído com a chave configurada. Está pronto para usar."
+    ),
+    "test.reachable.title": "Servidor respondeu",
+    "test.reachable.detail": (
+        "Endereço, porta e usuário estão válidos: o servidor chegou a pedir "
+        "autenticação. Faltou só a senha ou a chave, que o teste não envia."
+    ),
+    "test.dns.title": "Nome não encontrado",
+    "test.dns.detail": (
+        "O endereço em HostName não foi resolvido. Confira se não há erro de "
+        "digitação no domínio."
+    ),
+    "test.refused.title": "Conexão recusada",
+    "test.refused.detail": (
+        "A máquina respondeu, mas nada está escutando nessa porta. Confira o "
+        "valor de Port e se o sshd está no ar."
+    ),
+    "test.timeout.title": "O servidor não respondeu",
+    "test.timeout.detail": (
+        "Sem resposta dentro do tempo limite. Costuma ser firewall, IP errado "
+        "ou máquina desligada."
+    ),
+    "test.network.title": "Rede inacessível",
+    "test.network.detail": (
+        "Não há caminho até esse endereço a partir daqui. Verifique sua rede "
+        "ou a necessidade de VPN."
+    ),
+    "test.hostkey.title": "A identidade do servidor mudou",
+    "test.hostkey.detail": (
+        "A chave do host não bate com a guardada em known_hosts. Pode ser "
+        "reinstalação do servidor — ou alguém no meio do caminho. Confirme "
+        "antes de remover a linha antiga."
+    ),
+    "test.config.title": "Configuração inválida",
+    "test.config.detail": ("O ssh recusou uma das opções. A saída abaixo indica qual."),
+    "test.no-ssh.title": "ssh não encontrado",
+    "test.no-ssh.detail": ("Instale o pacote openssh-client para usar o teste."),
+    "test.unknown.title": "Não deu para concluir o teste",
+    "test.unknown.detail": (
+        "O ssh terminou com código {code}. A saída completa está abaixo."
+    ),
     # -- option rows ------------------------------------------------------
     "rows.remove_tooltip": "Remover {name}",
     "rows.hint_with_example": "{description}  ex.: {example}",

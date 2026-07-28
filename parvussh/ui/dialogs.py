@@ -13,6 +13,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk  # noqa: E402
 
 from parvussh.core import keys  # noqa: E402
+from parvussh.core.tester import TestResult  # noqa: E402
 from parvussh.i18n import t  # noqa: E402
 
 DIALOG_WIDTH = 460
@@ -123,6 +124,46 @@ class NewKeyDialog(Adw.Dialog):
         dialog = Adw.AlertDialog(heading=heading, body=body)
         dialog.add_response("ok", t("dialog.understood"))
         dialog.present(self)
+
+
+class TestResultDialog(Adw.AlertDialog):
+    """The verdict on a connection test, with ssh's own words folded away.
+
+    The heading and body are the interpretation; the expander holds the raw
+    output for whoever wants to see exactly what ssh said. Colour carries no
+    meaning here — eight of the ten statuses are failures, and each needs its
+    own sentence anyway (docs/DECISIONS.md D4).
+    """
+
+    def __init__(self, result: TestResult) -> None:
+        super().__init__(
+            heading=t(f"test.{result.status}.title"),
+            body=t(f"test.{result.status}.detail", code=result.returncode),
+        )
+        if result.output:
+            self.set_extra_child(self._output(result.output))
+        self.add_response("ok", t("dialog.close"))
+
+    def _output(self, text: str) -> Gtk.Expander:
+        view = Gtk.TextView(
+            editable=False,
+            monospace=True,
+            wrap_mode=Gtk.WrapMode.WORD_CHAR,
+            top_margin=6,
+            bottom_margin=6,
+            left_margin=6,
+            right_margin=6,
+        )
+        view.get_buffer().set_text(text)
+
+        scroller = Gtk.ScrolledWindow(
+            min_content_height=120,
+            max_content_height=220,
+            propagate_natural_height=True,
+            css_classes=["card"],
+        )
+        scroller.set_child(view)
+        return Gtk.Expander(label=t("test.output_label"), child=scroller, margin_top=6)
 
 
 def display_path(path: Path) -> str:

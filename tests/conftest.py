@@ -139,6 +139,14 @@ class FakeBin:
         )
         script.chmod(script.stat().st_mode | stat.S_IXUSR)
 
+    def uninstall(self, name: str) -> None:
+        """Take a shim off PATH, so calling it raises FileNotFoundError.
+
+        The "openssh-client is not installed" case, which some fixtures have
+        to undo because loading a config needs a working `ssh` first.
+        """
+        (self.bindir / name).unlink(missing_ok=True)
+
     def calls(self, name: str) -> list[list[str]]:
         """Every invocation's argv, in order. `argv[0]` is the shim's path."""
         log = self._log(name)

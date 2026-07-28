@@ -222,6 +222,26 @@ class Editor(Adw.NavigationPage):
     def focus_alias(self) -> None:
         self.host.grab_focus()
 
+    def alias(self) -> str:
+        """The first pattern in the Host field — what `ssh <alias>` would take."""
+        patterns = self.host.get_text().split()
+        return patterns[0] if patterns else ""
+
+    def config_text(self) -> str:
+        """The form as a standalone config, for testing before saving.
+
+        Built from the widgets rather than from the block, so the connection
+        being tested is the one on screen — which is the whole point of being
+        able to test before committing anything to disk.
+        """
+        lines = [f"Host {self.alias()}"]
+        for name, row in self._basic_rows():
+            value = row.get_text().strip()
+            if value:
+                lines.append(f"    {name} {value}")
+        lines.extend(option.config_line() for option in self.options if option.value())
+        return "\n".join(lines) + "\n"
+
     # -- editing -----------------------------------------------------------
 
     def mark_dirty(self) -> None:
