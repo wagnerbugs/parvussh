@@ -525,6 +525,11 @@ docs: add readme, contributing guide, changelog and desktop metadata
 
 ## M15 — CI
 
+**Deferred by the owner on 2026-07-28.** Not done, and deliberately not ticked:
+the project is for personal use for the next few months, and `make check` runs
+locally before every commit. Revisit when someone other than the owner starts
+sending changes.
+
 - [ ] `.github/workflows/ci.yml` — Ubuntu runner, install
   `python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 xvfb openssh-client`, then
   `make lint`, `make test`, `make test-gui`
@@ -532,6 +537,11 @@ docs: add readme, contributing guide, changelog and desktop metadata
 - [ ] Status badges in the README
 
 **Gate:** CI green on a pull request.
+
+Whoever picks this up: everything it needs already exists. `make check` is the
+whole pipeline, `make test-gui` falls back gracefully when `xvfb-run` is
+missing, and `tests/conftest.py` skips the gui suite cleanly when the typelibs
+are absent — so a runner without the gir packages reports skips, not failures.
 
 ```
 ci: run lint, unit tests and gui smoke tests on every push
