@@ -180,18 +180,31 @@ feat(data): add ssh option catalog with pt-BR descriptions
 
 ## M4 — Key discovery and generation
 
-- [ ] `parvussh/core/keys.py` — `SshKey`, `list_keys`, `describe`, `generate`,
-  `copy_id_command` (SPEC §5)
-- [ ] `tests/test_keys.py` using the fake-bin fixture:
+- [x] `parvussh/core/keys.py` — `SshKey`, `looks_like_a_key`, `list_keys`,
+  `describe`, `generate_command`, `generate`, `copy_id_command`, and the
+  `KeyToolError` / `KeyExistsError` / `KeyToolMissing` hierarchy (SPEC §5)
+- [x] `tests/test_keys.py` using the fake-bin fixture:
   - `.pub` files, `known_hosts`, `config` are excluded
   - a key with a sibling `.pub` is found; a random text file is not
   - a file whose first bytes contain `PRIVATE KEY` is found without a `.pub`
   - `describe` parses `256 SHA256:xxx comment (ED25519)` into its fields
-  - `describe` degrades gracefully when `ssh-keygen` fails
-  - `generate` refuses an existing path with the pt-BR message
+  - `describe` degrades gracefully when `ssh-keygen` fails, is missing, or
+  prints something we have never seen
+  - `generate` refuses an existing path — raising `KeyExistsError`, not
+  returning a pt-BR sentence (D3)
   - `generate` builds the expected argv for ed25519 and for rsa 4096
 
-**Gate:** `make test` green.
+**Gate:** `make test` green — 177 passed.
+
+**Added beyond spec:** our own `config.bak-*` files are skipped by name. They
+sit right next to the keys and the spec's suffix list does not cover them.
+
+`FakeBin` grew a `creates` field so a fake `ssh-keygen` leaves a key behind
+like the real one; without it, "refuses to overwrite" could not be told apart
+from "did nothing".
+
+**Mutation:** removing the overwrite guard failed
+`test_generate_refuses_an_existing_path`.
 
 ```
 feat(core): discover ssh keys and generate new ones
@@ -201,16 +214,24 @@ feat(core): discover ssh keys and generate new ones
 
 ## M5 — Connection tester
 
-- [ ] `parvussh/core/tester.py` — `TestResult`, `test(alias, config_text)`,
-  and a separate pure `interpret(returncode, output) -> TestResult`
-  (SPEC §6). Keeping `interpret` pure is what makes the table testable.
-- [ ] `tests/test_tester.py` — one test per row of the interpretation table,
+- [x] `parvussh/core/tester.py` — `TestResult`, **`run(alias, config_text)`**
+  (renamed from `test()`, which pytest collects as a test case wherever it is
+  imported), `build_command()`, and a separate pure
+  `interpret(returncode, output) -> TestResult` (SPEC §6). Keeping `interpret`
+  pure is what makes the table testable.
+- [x] `tests/test_tester.py` — one test per row of the interpretation table,
   named after the status (`test_interpret_permission_denied_is_success`,
   etc.). Assert `ok` is `True` for exit 0 and for permission-denied, and
   `False` everywhere else.
-- [ ] Assert the temp config file is deleted even when the subprocess raises
+- [x] Assert the temp config file is deleted even when the subprocess raises
 
-**Gate:** `make test` green with every table row covered.
+**Gate:** `make test` green with every table row covered — 206 passed,
+`parvussh/core/tester.py` at 100%.
+
+**Kept from the prototype, absent from the spec's table:** `"line"` plus
+`"invalid"` in the output also counts as a config error. Different ssh versions
+phrase option complaints both ways. Now covered by a named test instead of
+living as an undocumented extra condition.
 
 ```
 feat(core): run and interpret non-interactive connection tests

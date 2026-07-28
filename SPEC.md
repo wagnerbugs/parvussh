@@ -337,8 +337,13 @@ alternative for anyone who cares.
 
 ## 6. Connection test
 
+> **Renamed during M5.** The entry point is `run(alias, config_text)`, not
+> `test(...)`: pytest collects any module-level `test_*` as a test case, and
+> importing the module broke collection. `test_command()` became
+> `build_command()` for the same reason.
+>
 > **Amended by `docs/DECISIONS.md` D3.** `TestResult` carries
-> `(ok, status, output)` only. The Heading and Body columns below are the
+> `(status, output, returncode)`, with `ok` derived from the status. The Heading and Body columns below are the
 > pt-BR copy for `t("test.<status>.title")` and `t("test.<status>.detail")`,
 > which live in `i18n/pt_br/ui.py`. Every other column — the ordering, the
 > match strings, the `status` names and the `ok` values — is normative and

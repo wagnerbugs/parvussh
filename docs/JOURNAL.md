@@ -168,6 +168,57 @@ because `ui/` is empty; from M6 on it is the safety net that lets UI code use
 
 `make test` → 135 passed.
 
-**Next session starts with.** M4 — `core/keys.py`. `REF/keys.py` was not handed
-over either, so build from SPEC §5, remembering D3: `generate()` raises a typed
-error instead of returning the pt-BR sentence the spec shows.
+### M4 — keys
+
+Built from SPEC §5; `REF/keys.py` was never handed over.
+
+Three error types instead of the spec's pt-BR sentence, per D3:
+`KeyExistsError` (carries the path, so the UI can name it), `KeyToolMissing`
+(no openssh-client — a different message than a failure) and `KeyToolError`
+(carries whatever `ssh-keygen` printed).
+
+Added to the skip list beyond the spec: **our own `config.bak-*` files**. They
+land in `~/.ssh` right beside the keys, and the spec's suffix list only covers
+`.bak`, not `.bak-20260728-174320`. They would not have survived the
+`PRIVATE KEY` sniff either, but relying on that is luck rather than intent.
+
+`generate_command()` is split out from `generate()` so the argv can be asserted
+without running anything. Worth keeping that shape wherever we build a command
+line.
+
+`FakeBin` gained a `creates` field: the shim now writes a file at the path
+given after `-f`/`-F`, so a fake `ssh-keygen` behaves like the real one. Before
+that, "refuses to overwrite an existing key" and "did nothing at all" looked
+identical from the outside, and two tests were quietly asserting the wrong
+thing.
+
+### M5 — connection tester
+
+Ported from `REF/Tester.py`. The interpretation table moved into a `SIGNS`
+tuple so the order — which is the whole contract — is one readable block
+instead of a ladder of `if`s.
+
+Two renames, both forced by pytest's collection rules and both worth having
+anyway:
+
+- `test()` → **`run()`**. A module-level `test(...)` gets collected as a test
+  case wherever it is imported.
+- `test_command()` → **`build_command()`**, for the same reason: pytest tried
+  to inject fixtures named `alias` and `config_path`.
+- `TestResult` keeps the spec's name but carries `__test__ = False`, or pytest
+  warns on every run.
+
+Kept from the prototype and *not* in the spec's table: `"line" in output and
+"invalid" in output` also counts as a config error. Different ssh versions
+phrase option complaints both ways. It is now covered by a named test rather
+than living as an undocumented extra condition.
+
+`TestResult` is `(status, output, returncode)` with `ok` derived from a
+`SUCCESSES` set — no titles, no prose (D3). The pt-BR wording arrives at M12
+as `t("test.<status>.title")`.
+
+`make test` → 206 passed. `parvussh/core` coverage 97%. **Core is complete.**
+
+**Next session starts with.** M6 — the first GTK milestone. Everything before
+this point runs headless; from here on `make test-gui` matters, and `xvfb` is
+not installed on this machine (`make setup` now installs it).
