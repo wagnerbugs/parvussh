@@ -141,6 +141,59 @@ def test_a_refusal_wins_over_a_message_that_also_says_timeout() -> None:
     assert interpret(255, both).status == REFUSED
 
 
+# -- output captured from real servers -------------------------------------
+
+#: OpenSSH 10 prints this before almost every connection to a server running an
+#: older release. It is client-side noise about the *server's* age, not about
+#: whether the connection worked, and it will be in front of nearly every
+#: verdict from now on.
+POST_QUANTUM_WARNING = (
+    "** WARNING: connection is not using a post-quantum key exchange algorithm.\n"
+    '** This session may be vulnerable to "store now, decrypt later" attacks.\n'
+    "** The server may need to be upgraded. See https://openssh.com/pq.html"
+)
+
+
+def test_the_post_quantum_warning_alone_matches_nothing() -> None:
+    """The banner is inert: it must never be mistaken for a diagnosis.
+
+    Fails if a future needle collides with one of its words — "connection",
+    "server" and "session" are all in there, and any of them would turn a
+    routine banner into a verdict.
+    """
+    assert interpret(255, POST_QUANTUM_WARNING).status == UNKNOWN
+
+
+def test_a_real_openssh_10_refusal_still_reads_as_reachable() -> None:
+    """Captured from an actual run against a VPS, OpenSSH 10.2 client.
+
+    Three lines of banner, then the line that matters. Reaching the
+    authentication prompt is the success we care about, and the noise in front
+    of it must not change that.
+    """
+    real = (
+        f"{POST_QUANTUM_WARNING}\n"
+        "deploy@203.0.113.24: Permission denied (publickey,password)."
+    )
+
+    result = interpret(255, real)
+
+    assert result.status == REACHABLE
+    assert result.ok is True
+    # And the banner survives into the expander, unedited.
+    assert "post-quantum" in result.output
+
+
+def test_the_banner_does_not_disturb_a_genuine_failure() -> None:
+    """It only appears once crypto was negotiated, so it rides along with
+    late-stage failures too."""
+    for tail, expected in (
+        ("Host key verification failed.", HOSTKEY),
+        ("ssh: connect to host x port 22: Connection refused", REFUSED),
+    ):
+        assert interpret(255, f"{POST_QUANTUM_WARNING}\n{tail}").status == expected
+
+
 # -- running it ------------------------------------------------------------
 
 

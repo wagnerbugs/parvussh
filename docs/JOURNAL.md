@@ -489,6 +489,45 @@ misuse now fails a test instead of scrolling past.
   categories, so the app would appear twice in the menu.
 - **`REF/` is gone.** Everything was ported, and git keeps the history.
 
+### Real output from a real server, and the banner that now precedes it
+
+The owner tested against a live VPS. **OpenSSH 10 prints a post-quantum warning
+before almost every connection to a server running an older release:**
+
+```
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+suporte@203.0.113.10: Permission denied (publickey,password).
+```
+
+The client here is OpenSSH_10.2p1. `interpret()` handled it correctly —
+`reachable`, "Servidor respondeu" — but the raw output in the expander reads
+alarming, and the owner took it for a failure. The verdict wording is doing its
+job; the noise in front of it is simply what ssh now says.
+
+**No code change.** The banner is client-side commentary about the *server's*
+age, not about whether the connection worked, and the promise in SPEC §6 is to
+show ssh's output verbatim. Filtering it would be us deciding which of ssh's
+words the user is allowed to see.
+
+**Three tests added**, because this is the first real-world sample the suite
+has:
+
+- the exact captured output still reads as `reachable`, banner preserved
+- the banner **alone** matches nothing — it contains the words "connection",
+  "server" and "session", so any future needle sloppy enough to use one of
+  those bare would turn a routine banner into a verdict
+- the banner riding along with a genuine `hostkey` or `refused` failure does
+  not change the diagnosis
+
+Mutation confirmed: loosening the `refused` needle to a bare `"connection"`
+fails three tests, two of them these.
+
+Worth remembering: this banner only appears once crypto has been negotiated, so
+its presence is itself evidence the server answered. Not encoded — but if the
+interpretation table ever needs a tie-breaker, that is a real signal.
+
 ### Known deviation: two files are over the size guideline
 
 `CLAUDE.md` §3 says a file past ~250 lines is usually two ideas sharing a name.
