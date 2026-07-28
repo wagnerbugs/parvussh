@@ -34,9 +34,17 @@ with log_path.open("a", encoding="utf-8") as log:
     log.write(json.dumps(sys.argv) + "\\n")
 result = results[seen] if seen < len(results) else results[-1]
 
-# %F in a scripted stream expands to the file passed after -F, so a test can
-# script a message that quotes the temp path the caller just invented.
-target = argv[argv.index("-F") + 1] if "-F" in argv else ""
+# The file argument: -F for ssh, -f for ssh-keygen.
+flag = "-F" if "-F" in argv else ("-f" if "-f" in argv else "")
+target = argv[argv.index(flag) + 1] if flag else ""
+
+# A real ssh-keygen leaves a key behind, so a shim standing in for it must
+# too — otherwise "refuse to overwrite" cannot be told from "did nothing".
+if result.get("creates") and target:
+    pathlib.Path(target).write_text(result["creates"], encoding="utf-8")
+
+# %F in a scripted stream expands to that same path, so a test can script a
+# message quoting the temp file the caller just invented.
 sys.stdout.write(result["stdout"].replace("%F", target))
 sys.stderr.write(result["stderr"].replace("%F", target))
 sys.exit(result["returncode"])
@@ -90,10 +98,23 @@ class FakeBin:
         returncode: int = 0,
         stdout: str = "",
         stderr: str = "",
+        creates: str = "",
     ) -> None:
-        """Script one answer, replayed for every call."""
+        """Script one answer, replayed for every call.
+
+        `creates` is content the shim writes to the file named after `-f`/`-F`,
+        so a fake `ssh-keygen` can leave a key behind like the real one does.
+        """
         self.install_sequence(
-            name, [{"returncode": returncode, "stdout": stdout, "stderr": stderr}]
+            name,
+            [
+                {
+                    "returncode": returncode,
+                    "stdout": stdout,
+                    "stderr": stderr,
+                    "creates": creates,
+                }
+            ],
         )
 
     def install_sequence(self, name: str, results: list[dict[str, object]]) -> None:
