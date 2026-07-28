@@ -348,17 +348,26 @@ feat(ui): edit and save the core connection fields
 
 ## M9 — Typed option rows
 
-- [ ] `parvussh/ui/rows.py` — `OptionRow` producing the right widget per kind,
+- [x] `parvussh/ui/rows.py` — `OptionRow` producing the right widget per kind,
   with a trash suffix button (SPEC §4 table)
-- [ ] Unknown options fall back to a `STR` row and survive a save round-trip
-- [ ] GUI test per kind: set a value, read it back through `value()`, and
+- [x] Unknown options fall back to a `STR` row and survive a save round-trip
+- [x] GUI test per kind: set a value, read it back through `value()`, and
   confirm the rendered config line
-- [ ] GUI test: an option not in the catalog is loaded, displayed and saved
+- [x] GUI test: an option not in the catalog is loaded, displayed and saved
   unchanged
 
 **Gate:** a `Host` with `Compression yes`, `ServerAliveInterval 60` and
 `StrictHostKeyChecking accept-new` renders as a switch, a spinner and a
-dropdown, and saves back identically.
+dropdown, and saves back identically — confirmed in `scratchpad/m9.png`.
+101 gui tests pass.
+
+**Added beyond spec, and it matters:** a typed widget is only used when the
+*current value fits it*. `fits_widget()` sends `Compression maybe` and
+`ConnectTimeout 99999` to a plain text row instead. A `Adw.SpinRow` bounded
+0..3600 would have clamped that timeout to 3600 on the next save, and a
+`Adw.SwitchRow` would have rewritten `maybe` as `no` — both silently, both in
+a file the app promises not to mangle. `ENUM` keeps an unlisted value by
+appending it to the dropdown model.
 
 ```
 feat(ui): render each ssh option with a widget matching its type

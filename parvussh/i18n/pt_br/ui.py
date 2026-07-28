@@ -54,6 +54,10 @@ STRINGS: dict[str, str] = {
     "editor.field.hostname": "HostName — endereço real",
     "editor.field.user": "User",
     "editor.field.port": "Port",
+    "editor.group.extras": "Opções adicionais",
+    "editor.group.extras_empty": (
+        "Nenhuma opção extra. Use o + para procurar pelo nome."
+    ),
     "editor.error.empty_alias": "O apelido em Host não pode ficar vazio.",
     "editor.error.port_not_a_number": "Port aceita apenas números.",
     # -- saving -----------------------------------------------------------
@@ -67,6 +71,9 @@ STRINGS: dict[str, str] = {
     "unsaved.heading": "Alterações não salvas",
     "unsaved.body": ("“{alias}” tem mudanças que ainda não foram gravadas no arquivo."),
     "unsaved.discard": "Descartar",
+    # -- option rows ------------------------------------------------------
+    "rows.remove_tooltip": "Remover {name}",
+    "rows.hint_with_example": "{description}  ex.: {example}",
     # -- dialogs ----------------------------------------------------------
     "dialog.understood": "Entendi",
     "dialog.close": "Fechar",

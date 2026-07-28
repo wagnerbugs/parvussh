@@ -13,8 +13,9 @@ from gi.repository import Adw, Gio, Gtk  # noqa: E402
 
 from parvussh import APP_NAME  # noqa: E402
 from parvussh.core.models import Block, Entry  # noqa: E402
-from parvussh.data.keywords import BASIC  # noqa: E402
+from parvussh.data.keywords import BASIC, Keyword, for_option  # noqa: E402
 from parvussh.i18n import t  # noqa: E402
+from parvussh.ui.rows import OptionRow  # noqa: E402
 
 EMPTY = "empty"
 FORM = "form"
@@ -100,9 +101,54 @@ class Editor(Adw.NavigationPage):
             row.connect("changed", lambda *_a: self.mark_dirty())
             basics.add(row)
 
+        self.options: list[OptionRow] = []
+        self.extras = Adw.PreferencesGroup(title=t("editor.group.extras"))
+        self.empty_extras = Gtk.Label(
+            label=t("editor.group.extras_empty"),
+            wrap=True,
+            xalign=0,
+            css_classes=["dim-label"],
+        )
+        self.extras.add(self.empty_extras)
+
         page = Adw.PreferencesPage()
         page.add(basics)
+        page.add(self.extras)
         return page
+
+    # -- extra options -----------------------------------------------------
+
+    def add_option(self, keyword: Keyword, value: str = "", comments=None) -> OptionRow:
+        """Put one option row on the form and return it."""
+        option = OptionRow(
+            keyword,
+            value,
+            comments,
+            on_change=self.mark_dirty,
+            on_remove=self.remove_option,
+        )
+        self.options.append(option)
+        self.extras.add(option.row)
+        self._sync_extras()
+        return option
+
+    def remove_option(self, option: OptionRow) -> None:
+        self.extras.remove(option.row)
+        self.options.remove(option)
+        self._sync_extras()
+        self.mark_dirty()
+
+    def used_options(self) -> set[str]:
+        """Lowercased names already on the form, so the `+` never offers them."""
+        return {option.keyword.name.lower() for option in self.options}
+
+    def _clear_options(self) -> None:
+        for option in self.options:
+            self.extras.remove(option.row)
+        self.options = []
+
+    def _sync_extras(self) -> None:
+        self.empty_extras.set_visible(not self.options)
 
     def _basic_rows(self) -> tuple[tuple[str, Adw.EntryRow], ...]:
         """The three catalogued fields, in the order they are written out."""
@@ -130,6 +176,14 @@ class Editor(Adw.NavigationPage):
         self.hostname.set_text(block.get("HostName"))
         self.user.set_text(block.get("User"))
         self.port.set_text(block.get("Port"))
+
+        self._clear_options()
+        for entry in block.entries:
+            if entry.keyword.lower() in BASIC_LOWER:
+                continue
+            # An option missing from the catalog still gets a row — it is kept
+            # as plain text and written back untouched (contract rule 3).
+            self.add_option(for_option(entry.keyword), entry.value, entry.comments)
         self._loading = False
 
         self.title_widget.set_title(block.title)
@@ -178,11 +232,10 @@ class Editor(Adw.NavigationPage):
             for name, row in self._basic_rows()
             if row.get_text().strip()
         ]
-        # Everything the form does not show yet is carried over untouched.
-        # M9 replaces this with the typed option rows; dropping the entries
-        # here would silently delete a host's IdentityFile on the first save.
         entries.extend(
-            entry for entry in block.entries if entry.keyword.lower() not in BASIC_LOWER
+            Entry(option.keyword.name, option.value(), option.comments)
+            for option in self.options
+            if option.value()
         )
 
         patterns = alias.split()

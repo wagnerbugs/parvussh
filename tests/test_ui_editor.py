@@ -112,8 +112,8 @@ def test_saving_leaves_every_other_block_untouched(app, config_file: Path) -> No
         assert survivor in text, survivor
 
 
-def test_an_option_the_form_does_not_show_yet_survives(app, config_file: Path) -> None:
-    """Until M9 renders option rows, they must be carried over, not dropped."""
+def test_an_extra_option_and_its_comment_survive_a_save(app, config_file: Path) -> None:
+    """Editing one field must not disturb the options around it."""
     app.editor.hostname.set_text("203.0.113.99")
 
     app.save_current()

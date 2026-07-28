@@ -332,4 +332,34 @@ The test suite never presents a window, so `make test-gui` was never affected �
 this only ever applied to the screenshot script. `xvfb` is still worth
 installing for CI.
 
-**Next session starts with.** M9 — typed option rows, one widget per kind.
+### M9 — typed option rows
+
+**The idea worth keeping: a typed widget is a promise.** Rendering
+`ConnectTimeout` as a `Adw.SpinRow` bounded 0..3600 says "every value this
+option can hold, this widget can hold". It is not true — someone's config may
+say `99999`, and the spinner would clamp it to 3600 the next time they pressed
+Salvar. Same for `Compression maybe` through a `Adw.SwitchRow`, which comes
+back as `no`.
+
+`fits_widget(keyword, value)` decides, and a row whose value does not fit falls
+back to a plain `Adw.EntryRow` where anything survives. `OptionRow.typed`
+records which happened, and `value()` reads whichever widget was actually
+built. `ENUM` handles it differently — an unlisted value is appended to the
+dropdown model, so it is selectable and never lost.
+
+An empty value always "fits": that is a freshly added option, not something
+read out of a file.
+
+A new boolean starts **off**, matching ssh's own default for the options in the
+catalog. Starting it on would silently enable something like
+`ForwardX11Trusted` for anyone who added it to look at it.
+
+`for_option()` from M3 does the rest: an option missing from the catalog gets a
+text row described as "Opção não catalogada, preservada como está." and is
+written back untouched.
+
+The M8 carry-over in `Editor.apply()` is gone, replaced by the option rows as
+planned. The test that guarded it was **reworded, not deleted** —
+`test_an_extra_option_and_its_comment_survive_a_save`.
+
+**Next session starts with.** M10 — the add-option popover.
