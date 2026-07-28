@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import stat
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -180,6 +181,33 @@ def gtk():
         pytest.skip("no display available; run under xvfb-run")
     Adw.init()
     return Adw, Gtk
+
+
+@pytest.fixture
+def pump(gtk):
+    """Run the GLib main loop until a condition holds, or fail on timeout.
+
+    Needed wherever the interface is driven by something other than a direct
+    call: `Gtk.SearchEntry` debounces `search-changed` behind a timer, and the
+    connection test delivers its result through `GLib.idle_add`. Neither
+    happens while nothing is iterating the main context.
+    """
+    import time
+
+    from gi.repository import GLib
+
+    def _pump(until: Callable[[], bool], timeout: float = 2.0) -> None:
+        context = GLib.MainContext.default()
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            while context.pending():
+                context.iteration(False)
+            if until():
+                return
+            time.sleep(0.01)
+        raise AssertionError(f"condition never became true within {timeout}s")
+
+    return _pump
 
 
 @pytest.fixture

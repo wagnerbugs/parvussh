@@ -282,14 +282,31 @@ feat(ui): add application shell with split-view layout
 
 ## M7 — Sidebar
 
-- [ ] `parvussh/ui/sidebar.py` — search entry, `Gtk.ListBox` with `boxed-list`,
+- [x] `parvussh/ui/sidebar.py` — search entry, `Gtk.ListBox` with `boxed-list`,
   one `Adw.ActionRow` per host, prefix icons, filter function (SPEC §7)
-- [ ] Wire `reload()` and selection to the window
-- [ ] GUI test: a fixture config with three hosts produces three rows in order;
+- [x] Wire `reload()` and selection to the window
+- [x] GUI test: a fixture config with three hosts produces three rows in order;
   typing in the search box filters down to one; wildcard rows get the
   other icon
 
-**Gate:** the sidebar shows the fixture hosts and filters as you type.
+**Gate:** the sidebar shows the fixture hosts and filters as you type — 44 gui
+tests pass, and the render in `scratchpad/m7.png` shows all three rows with
+their subtitles and icons.
+
+**Two testing facts worth carrying forward:**
+
+1. **GTK applies a list box filter only once the widget is mapped.** The test
+   window is never presented, so every row reports itself visible.
+   `Sidebar.visible_rows()` therefore evaluates the predicate directly, and a
+   separate test proves `invalidate_filter` is actually called.
+2. **`Gtk.SearchEntry` debounces `search-changed` behind a timer.** Nothing
+   fires unless something iterates the main context. `tests/conftest.py` gained
+   a `pump(until, timeout)` fixture for this; M12 needs the same thing for
+   `GLib.idle_add`.
+
+**Departure from SPEC §1:** a wildcard row's subtitle is "Padrão curinga", not
+"sem HostName". `Host *` is *meant* to have no HostName — reporting it as
+missing describes a problem that does not exist.
 
 ```
 feat(ui): list connections in a filterable sidebar

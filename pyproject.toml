@@ -60,6 +60,12 @@ select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 testpaths = ["tests"]
 markers = ["gui: needs GTK typelibs and a display (run under xvfb-run)"]
 addopts = "-m 'not gui'"
+filterwarnings = [
+    # PyGObject's own deprecations, on a distro-provided package we do not
+    # control. Ours would still surface: the filters are module-scoped.
+    "ignore::DeprecationWarning:gi.*",
+    "ignore:.*GLib.unix_signal_add_full is deprecated.*",
+]
 
 [tool.coverage.run]
 source = ["parvussh/core"]

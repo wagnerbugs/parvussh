@@ -29,6 +29,14 @@ STRINGS: dict[str, str] = {
     "sidebar.title": "Conexões",
     "sidebar.new_tooltip": "Nova conexão (Ctrl+N)",
     "sidebar.menu_tooltip": "Menu",
+    "sidebar.filter_placeholder": "Filtrar conexões…",
+    "sidebar.no_hostname": "sem HostName",
+    "sidebar.wildcard_subtitle": "Padrão curinga",
+    "sidebar.wildcard_tooltip": (
+        "Bloco curinga: vale para todas as conexões que casarem com o padrão."
+    ),
+    "sidebar.empty": "Nenhuma conexão ainda. Use o + para cadastrar a primeira.",
+    "sidebar.no_matches": "Nada encontrado para “{query}”.",
     # -- editor -----------------------------------------------------------
     "editor.title": "Conexão",
     "editor.save": "Salvar",

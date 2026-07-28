@@ -252,4 +252,34 @@ owns the `ConfigSet`, and the two pages own their widgets.
 `shorten_home()` lives in `window.py` and turns `/home/x/.ssh/config` into
 `~/.ssh/config`. Every path the user sees goes through it.
 
-**Next session starts with.** M7 — the sidebar list and its filter.
+### M7 — sidebar
+
+Two GTK testing facts that will keep mattering:
+
+1. **A `Gtk.ListBox` filter is applied when the widget is mapped.** The test
+   window is deliberately never presented, so every row still reports itself
+   visible and asserting on widget visibility proves nothing.
+   `Sidebar.visible_rows()` evaluates the predicate directly and says so in its
+   docstring; a separate test proves `invalidate_filter()` really is called.
+2. **`Gtk.SearchEntry` debounces `search-changed`.** It fires from a timer, so
+   nothing happens unless something iterates the main context. Added a
+   `pump(until, timeout)` fixture to `tests/conftest.py`. M12 will need it for
+   `GLib.idle_add` from the test worker thread.
+
+Rebuilding the list emits `row-selected` as rows come and go, which would load
+blocks the user never clicked. `Sidebar._rebuilding` guards it, and
+`test_rebuilding_the_list_does_not_load_blocks_nobody_clicked` pins it.
+
+`GLib.markup_escape_text` on the row title is not cosmetic: `Adw.ActionRow`
+parses its title as Pango markup, and an alias containing `&` or `<` is legal
+in ssh_config.
+
+**Departure from SPEC §1.** A wildcard row's subtitle is "Padrão curinga"
+rather than "sem HostName". `Host *` is *supposed* to have no HostName, so
+reporting it as missing invents a problem. Visible in `scratchpad/m7.png`.
+
+`pyproject.toml` now filters PyGObject's own deprecation warnings, which were
+burying the test output. The filters are module-scoped to `gi.*`, so warnings
+from our code still surface.
+
+**Next session starts with.** M8 — the editor form and the save path.

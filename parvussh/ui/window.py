@@ -99,8 +99,12 @@ class ParvuSshWindow(Adw.ApplicationWindow):
             self.show_message(t("error.read_config"), str(error))
             return
         self.current = None
+        self.sidebar.set_blocks(self.config.hosts)
         self._show_block(None)
-        # The sidebar starts rendering this list at M7.
+
+    def refresh_list(self, select: Block | None = None) -> None:
+        """Rebuild the sidebar from the config in memory, keeping a selection."""
+        self.sidebar.set_blocks(self.hosts, select=select)
 
     @property
     def hosts(self) -> list[Block]:
