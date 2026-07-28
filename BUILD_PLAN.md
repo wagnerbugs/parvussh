@@ -87,15 +87,17 @@ feat(core): parse ssh_config preserving comments and layout
 
 ## M2 — Safe writing
 
-- [ ] `parvussh/core/writer.py` — `ConfigError`, `validate(text)`,
+- [x] `parvussh/core/writer.py` — `ConfigError`, `validate(text)` (raises),
+  `ensure_exists(path)`, `backup_path(path)`,
   `write_atomic(path, text) -> Path | None` (SPEC §3)
-- [ ] `parvussh/core/store.py` — `ConfigFile`, `ConfigSet` with `load`, `hosts`,
-  `file_of`, `add_host`, `remove`, `duplicate`, `save`
-- [ ] Include resolution with cycle guard (SPEC §2)
-- [ ] `tests/conftest.py` — a fixture that redirects `Path.home()` to
-  `tmp_path` for the whole session, plus a `fake_bin` fixture that puts a
-  scripted `ssh` / `ssh-keygen` shim on `PATH`
-- [ ] `tests/test_writer.py`:
+- [x] `parvussh/core/store.py` — `ConfigFile`, `ConfigSet` with `load`, `hosts`,
+  `main_file`, `file_of`, `add_host`, `remove`, `duplicate`, `save`
+- [x] Include resolution with cycle guard (SPEC §2)
+- [x] `tests/conftest.py` — `fake_bin`, which empties `PATH` and installs
+  scripted `ssh` / `ssh-keygen` shims that record their argv and can answer
+  differently per call (`install_sequence`). The `Path.home()` redirect landed
+  at M1 and is autouse.
+- [x] `tests/test_writer.py`:
   - backup created with the expected name pattern
   - file mode is `0o600` after write
   - validation failure raises `ConfigError` and leaves the original file
@@ -104,11 +106,26 @@ feat(core): parse ssh_config preserving comments and layout
   - `save()` rewrites only dirty files and returns their paths
   - after `save()`, blocks are no longer dirty and a second `save()` is a
   no-op
-- [ ] `tests/test_store.py`: Include loading, cycle guard, `add_host`,
+- [x] `tests/test_store.py`: Include loading, cycle guard, `add_host`,
   `duplicate`, `remove`
 
 **Gate:** `make test` green. Manually verify the guard: point a test at a real
 temp `~/.ssh`, save, and diff the untouched blocks — zero differences.
+
+**Gate result.** 96 passed, `parvussh/core` at 97%. The guard is pinned by
+`test_saving_an_edit_leaves_every_other_block_byte_identical` and
+`test_save_writes_only_dirty_files`.
+
+Two mutations, and the first was again not caught on the first try:
+
+- *Interleave validate with write* (SPEC §3 as literally written) passed the
+  suite twice over. First because the shim could only give one answer, so the
+  very first validation failed and nothing was written either way — fixed by
+  adding `install_sequence`. Then **again**, because re-rendering an unchanged
+  block produces identical bytes, so "the files are untouched" was true even
+  after a write. The assertion that actually bites is "no backup file exists":
+  a backup only appears if we wrote.
+- *Skip the backup* failed three tests immediately.
 
 ```
 feat(core): write config atomically with backup and ssh -G validation

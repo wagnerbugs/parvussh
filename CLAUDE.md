@@ -104,10 +104,10 @@ missing key returns the key itself, so a half-translated build still opens;
 ```
 parvussh/
 ├── core/            pure Python, zero GTK imports — fully unit tested
-│   ├── models.py      Entry, Block, ConfigFile dataclasses
-│   ├── parser.py      text  -> blocks
-│   ├── writer.py      blocks -> text, backup, atomic write, validation
-│   ├── store.py       ConfigSet: loads main config + Include files
+│   ├── models.py      Entry and Block dataclasses, render_blocks
+│   ├── parser.py      text  -> blocks, newline detection
+│   ├── writer.py      validation, dated backup, atomic write
+│   ├── store.py       ConfigFile + ConfigSet: main config + Include files
 │   ├── keys.py        discover keys in ~/.ssh, generate new ones
 │   └── tester.py      run ssh non-interactively, interpret the outcome
 ├── data/            static tables, no logic, no readable text

@@ -29,9 +29,15 @@ class Entry:
     comments: list[str] = field(default_factory=list)
 
 
-@dataclass
+@dataclass(eq=False)
 class Block:
-    """The global preamble, a `Host` block or a `Match` block."""
+    """The global preamble, a `Host` block or a `Match` block.
+
+    `eq=False` on purpose: a block is a position in a document, not a value.
+    Two `Host` blocks can hold identical text and still be different blocks, so
+    `list.remove(block)` and `block in blocks` must compare by identity — with
+    the generated `__eq__` they would silently act on the wrong one.
+    """
 
     kind: str  # GLOBAL | HOST | MATCH
     patterns: list[str] = field(default_factory=list)

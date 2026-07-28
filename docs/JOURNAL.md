@@ -82,7 +82,58 @@ one. Pinned by `test_a_missing_final_newline_is_added`.
 
 `make test` → 54 passed. `make lint` → clean.
 
-**Next session starts with.** M2 — `core/writer.py` and `core/store.py`.
-Note that `ConfigFile` must carry the `newline` detected at load so `text()`
-can write it back; `CLAUDE.md` §3 places `ConfigFile` in `models.py` while
-`BUILD_PLAN.md` M2 places it in `store.py` — following the build plan.
+### M2 — writing
+
+`ConfigFile` went in `store.py` per `BUILD_PLAN.md` M2; `CLAUDE.md` §3 said
+`models.py` and has been corrected to match the code.
+
+Five changes against `REF/Sshconfig.py` and `SPEC.md`, in rough order of how
+much damage each would have done:
+
+1. **`Path.read_text()` translates CRLF to LF.** The prototype read config
+   files in text mode, so a Windows-saved config arrived already normalised:
+   `detect_newline()` reported LF, and saving rewrote every line ending in the
+   file. Now `read_bytes().decode(...)`, with `newline=""` on both write sites
+   for symmetry. Found by `test_a_crlf_include_keeps_its_own_line_endings`,
+   which was written to check the store's plumbing and caught a real bug.
+2. **`SSH_DIR` and `MAIN_CONFIG` were module-level constants**, so they bound
+   `Path.home()` at import time and no test redirect could reach them. They
+   are now `ssh_dir()` and `main_config_path()` functions.
+3. **`Block` is `@dataclass(eq=False)`.** With generated equality,
+   `blocks.remove(block)` and `block in blocks` compare by value — two hosts
+   with identical text would make `remove()` delete the wrong one. A block is
+   a position in a document, not a value.
+4. **`save()` validates every pending file before writing any of them.**
+   SPEC §3 validates per file, which lets an early file land on disk and a
+   later one be refused, leaving half a save. The spec is amended in the
+   file itself.
+5. **Backups no longer collide.** `<name>.bak-YYYYMMDD-HHMMSS` is taken twice
+   if the user saves twice inside one second, and `copy2` would overwrite the
+   first — losing exactly the state they might want back. `backup_path()`
+   counts up.
+
+Also: `validate()` raises `ConfigError` rather than returning a message, and
+its message is ssh's own output with our temp path rewritten to the word
+`config`. It may be empty when ssh says nothing; the UI supplies wording in
+that case, because core carries no translated text (D3).
+
+**Mutation gate, again the most useful ten minutes of the milestone.**
+"Interleave validate with write" survived *two* rounds of hardening:
+
+- Round 1: the shim could only give one answer, so the first validation failed
+  and nothing was written either way. Added `FakeBin.install_sequence`, which
+  scripts one result per call.
+- Round 2: still green, because re-rendering an unedited block produces
+  identical bytes — "the files are unchanged" was true even though a write had
+  happened. The assertion with teeth is `list(ssh.glob("*.bak-*")) == []`: a
+  backup only exists if we wrote.
+
+Generalising: **assert on the side effect, not on the end state.** An
+idempotent write is invisible to a content check.
+
+`make test` → 96 passed. `parvussh/core` coverage 97%.
+
+**Next session starts with.** M3 — the option catalog and the pt-BR keyword
+descriptions. Two files move in step: `data/keywords.py` (structure) and
+`i18n/pt_br/keywords.py` (text), with a test asserting every catalog entry has
+a description so the two cannot drift.
