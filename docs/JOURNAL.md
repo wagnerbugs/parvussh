@@ -430,3 +430,24 @@ already at ~175 lines.
 **The interface is complete.** M14 (packaging and docs) and M15 (CI) are what
 remain, plus the two gates that need a human: pointing `Testar` at a real VPS,
 and creating a real key and seeing it appear in the picker.
+
+### Known deviation: two files are over the size guideline
+
+`CLAUDE.md` §3 says a file past ~250 lines is usually two ideas sharing a name.
+Two are over it:
+
+| File | Lines |
+|---|---|
+| `ui/window.py` | 322 |
+| `ui/editor.py` | 308 |
+
+I looked for a split and did not find an honest one. `window.py` is the
+coordinator plus seven action handlers, and pulling `test_current` into its own
+module would move one method rather than separate two ideas. `editor.py` is one
+form: its widgets, its option rows and its serialisation all reach into the
+same set of entries.
+
+Recording this rather than quietly amending the rule to fit the code. If either
+file grows again during M14, split it then — the likeliest seam in `window.py`
+is the group of connection commands (`new`, `duplicate`, `delete`), and in
+`editor.py` the "form to config" pair (`apply` and `config_text`).
