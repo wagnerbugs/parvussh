@@ -51,19 +51,33 @@ chore: scaffold project layout, tooling and license
 Pure Python. No GTK. Write the tests first — this is the module the whole
 project's credibility rests on.
 
-- [ ] `parvussh/core/models.py` — `Entry`, `Block` with `title`, `is_pattern`,
-  `get`, `comments_for`, `subtitle`, `render` (SPEC §1, §2)
-- [ ] `parvussh/core/parser.py` — `parse_text(text, source) -> list[Block]`
-  (SPEC §2)
-- [ ] `tests/fixtures/basic.config`, `empty.config`, `messy.config` (SPEC §9)
-- [ ] `tests/test_parser.py` — every assertion listed in SPEC §9
-- [ ] A parametrised round-trip test over **all** fixtures asserting byte
+- [x] `parvussh/core/models.py` — `Entry`, `Block` with `title`, `is_pattern`,
+  `get`, `comments_for`, `subtitle`, `render` (SPEC §1, §2), plus
+  `render_blocks(blocks, newline)`
+- [x] `parvussh/core/parser.py` — `parse_text(text, source) -> list[Block]`
+  and `detect_newline(text)` (SPEC §2)
+- [x] `tests/fixtures/basic.config`, `empty.config`, `messy.config` (SPEC §9),
+  pinned to their exact bytes by `.gitattributes`
+- [x] `tests/test_parser.py` — every assertion listed in SPEC §9
+- [x] A parametrised round-trip test over **all** fixtures asserting byte
   equality when nothing is dirty
-- [ ] `tests/test_no_gtk.py` — walk `parvussh/core` and `parvussh/data` sources and
-  assert none of them contain `import gi` (CLAUDE.md §3)
+- [x] `tests/test_no_gtk.py` — walk `parvussh/core`, `parvussh/data` and
+  `parvussh/i18n` sources and assert none of them import `gi` (CLAUDE.md §3).
+  Parses the AST rather than grepping.
+- [x] `tests/conftest.py` — an **autouse** `fake_home` fixture, so no test can
+  reach the real `~/.ssh` even by accident, plus `tests/test_safety.py`
+  asserting the redirect is live (CLAUDE.md §8; pulled forward from M2)
 
 **Gate:** `make test` green. Deliberately break one assertion, confirm it
 fails, restore it — a test suite that cannot fail is not a test suite.
+
+**Gate result.** Two mutations were run. The second (`render()` ignoring
+`dirty`) was caught by four tests. **The first was not caught**: swapping
+`_split_lines` for `str.splitlines()` left every test green, because
+`splitlines()` also breaks on form feed, vertical tab, U+0085 and U+2028 —
+bytes no fixture contained. `test_only_newlines_end_a_line` was added to close
+the hole, and the mutation then failed five ways. Keep this in mind for the
+later milestones: the gate is only worth the mutation you actually run.
 
 ```
 feat(core): parse ssh_config preserving comments and layout

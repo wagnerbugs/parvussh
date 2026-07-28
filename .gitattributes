@@ -1,0 +1,3 @@
+# The fixtures are byte-exact on purpose: messy.config is CRLF and the
+# round-trip test asserts byte equality. Never let git rewrite their endings.
+tests/fixtures/*.config -text

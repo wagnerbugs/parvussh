@@ -49,5 +49,40 @@ text copied from `/usr/share/common-licenses/GPL-3`), `Makefile`, the
 `core`/`data`/`i18n`/`ui` package skeleton with a working `i18n.t()`, a pt-BR
 README placeholder, and this file.
 
-**Next session starts with.** M1 — `core/models.py` and `core/parser.py`, tests
-first, fixtures per `SPEC.md` §9.
+### M1 — parser
+
+Ported from `REF/Sshconfig.py` with three changes, all driven by round-trip
+fidelity:
+
+1. **Line splitting.** The prototype used `str.splitlines()`, which also breaks
+   on form feed, vertical tab, U+0085 and U+2028. A config holding any of them
+   would have been silently rewritten — half a value turning into a bogus
+   keyword. `_split_lines` splits on `\n` only and drops a trailing `\r`.
+2. **CRLF.** `detect_newline(text)` reports the file's convention and
+   `render_blocks(blocks, newline)` writes it back. A Windows-saved config now
+   round-trips byte for byte, and an edited block keeps the file's endings
+   instead of introducing mixed ones.
+3. **`subtitle()` returns `""`** where the spec had `"sem HostName"` — that
+   sentence is interface copy and belongs to `i18n` under D3.
+
+**The mutation gate earned its keep.** Mutation 2 (`render()` ignoring
+`dirty`) failed four tests immediately. Mutation 1 (`_split_lines` →
+`splitlines()`) **passed the entire suite** — the fixtures had no exotic
+whitespace, so the two implementations were indistinguishable. Added
+`test_only_newlines_end_a_line`; the mutation then failed five ways. Lesson
+for later milestones: run the mutation, do not assume the suite would catch it.
+
+One thing to remember when reading the tests: `fake_home` is **autouse**, so
+`Path.home()` is a `tmp_path` in every test whether or not it asks. That is
+deliberate — CLAUDE.md §8 forbids touching the developer's real `~/.ssh`, and
+opt-in isolation is isolation someone eventually forgets.
+
+Known, accepted normalisation: a file that does not end with a newline gains
+one. Pinned by `test_a_missing_final_newline_is_added`.
+
+`make test` → 54 passed. `make lint` → clean.
+
+**Next session starts with.** M2 — `core/writer.py` and `core/store.py`.
+Note that `ConfigFile` must carry the `newline` detected at load so `text()`
+can write it back; `CLAUDE.md` §3 places `ConfigFile` in `models.py` while
+`BUILD_PLAN.md` M2 places it in `store.py` — following the build plan.
