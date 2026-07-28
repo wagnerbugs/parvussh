@@ -243,19 +243,36 @@ feat(core): run and interpret non-interactive connection tests
 
 First GTK milestone. From here on, `make test-gui` matters.
 
-- [ ] `parvussh/ui/app.py` — `ParvuSshApp(Adw.Application)`, app id from
+- [x] `parvussh/ui/app.py` — `ParvuSshApp(Adw.Application)`, app id from
   `parvussh.APP_ID`, `main()`, about dialog (`Gtk.License.GPL_3_0`)
-- [ ] `parvussh/ui/window.py` — window, `Adw.ToastOverlay`,
+- [x] `parvussh/ui/window.py` — window, `Adw.ToastOverlay`,
   `Adw.NavigationSplitView`, both navigation pages, empty `Adw.StatusPage`
   state, window actions (`new`, `save`, `test`, `delete`, `duplicate`,
   `help`, `reload`) with accelerators
-- [ ] `tests/conftest.py` — a `gui` fixture that skips cleanly when the GTK
-  typelibs are missing, and builds a window against a fake `$HOME`
-- [ ] `tests/test_ui_smoke.py` — `@pytest.mark.gui`: the window builds, the
+- [x] `parvussh/ui/sidebar.py` and `parvussh/ui/editor.py` — the two pages as
+  their own modules from the start, so M7 and M8 fill them in rather than
+  carving them out of a grown `window.py`
+- [x] `tests/conftest.py` — a `gtk` fixture that skips cleanly when the
+  typelibs or the display are missing, and a `window` fixture building against
+  a fake `$HOME`
+- [x] `tests/test_ui_smoke.py` — `@pytest.mark.gui`: the window builds, the
   empty state is visible, every action exists
 
 **Gate:** `make run` opens a window on the user's machine. `make test-gui`
 green under `xvfb-run`.
+
+**Gate result.** `python -m parvussh` runs until killed, no output. 23 gui
+tests pass, 206 headless tests still green.
+
+`xvfb-run` is not installed on this machine, so `make test-gui` now falls back
+to the running display instead of failing, and says so. `make setup` installs
+`xvfb`.
+
+**Caught by looking at a render of the window:** the empty state disabled the
+whole `Adw.HeaderBar`, which also disables minimise, maximise and close. Now
+the four actions needing a selection (`save`, `test`, `delete`, `duplicate`)
+are disabled instead; every button bound with `action_name` dims by itself and
+the window controls keep working.
 
 ```
 feat(ui): add application shell with split-view layout

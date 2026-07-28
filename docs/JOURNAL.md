@@ -219,6 +219,37 @@ as `t("test.<status>.title")`.
 
 `make test` → 206 passed. `parvussh/core` coverage 97%. **Core is complete.**
 
-**Next session starts with.** M6 — the first GTK milestone. Everything before
-this point runs headless; from here on `make test-gui` matters, and `xvfb` is
-not installed on this machine (`make setup` now installs it).
+### M6 — application shell
+
+**This machine has a live display** (`DISPLAY=:0`, `WAYLAND_DISPLAY=wayland-0`),
+so GTK tests run here without `xvfb`. `xvfb-run` itself is *not* installed;
+`make test-gui` now falls back to the current display and says so, and
+`make setup` installs `xvfb`. Preferring xvfb matters: without it, `make
+test-gui` flashes windows onto whoever is sitting at the machine.
+
+**How to actually see the UI without a screenshot tool.** There is no `grim`,
+`gnome-screenshot` or `import` here. `scratchpad/shoot.py` presents the window,
+waits 700 ms, then renders it through `Gtk.WidgetPaintable` → `Gtk.Snapshot`
+→ `Gsk.CairoRenderer.render_texture()` → `save_to_png()`. That gives a real
+image of the running interface to look at. Keep using it — the first render
+immediately caught a bug no test would have:
+
+> The empty state called `header.set_sensitive(False)`, following the
+> prototype. An `Adw.HeaderBar` contains the **window controls**, so that also
+> disabled minimise, maximise and close. Replaced with
+> `action.set_enabled(False)` on the four actions that need a selection —
+> every button bound via `action_name` dims by itself, and the header stays
+> live. `test_the_header_bar_itself_stays_sensitive` pins it.
+
+The general lesson: `set_sensitive` on a container is almost always too broad.
+Disable the action, not the widget.
+
+**Module layout.** `sidebar.py` and `editor.py` exist from M6 even though they
+are nearly empty, so M7 and M8 fill in modules rather than carving them out of
+a `window.py` that grew to 400 lines first. `window.py` is the coordinator: it
+owns the `ConfigSet`, and the two pages own their widgets.
+
+`shorten_home()` lives in `window.py` and turns `/home/x/.ssh/config` into
+`~/.ssh/config`. Every path the user sees goes through it.
+
+**Next session starts with.** M7 — the sidebar list and its filter.

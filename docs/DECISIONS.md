@@ -103,3 +103,32 @@ with the same keys, and `tests/test_i18n.py` fails if a key is missing.
   and we may still migrate to it before a Flathub submission, but it keeps the
   pt-BR text spread across `ui/**` and adds an `xgettext`/`msgfmt` build step
   for a benefit we do not need while there is one language. Revisit at M14.
+
+---
+
+## D4 — Look native, invest the effort in polish, ship no custom CSS
+
+**Date:** 2026-07-28
+
+**Context.** The owner ranked presentation above performance and asked for
+"um ambiente bonito". That could mean a distinctive visual identity or a
+faithful, well-finished GNOME app.
+
+**Decision.** Follow `SPEC.md` §7 exactly for structure, and spend the effort
+on finish: consistent spacing, the right symbolic icons, empty states that
+invite an action, tooltips on every icon-only button. **No custom stylesheet.**
+
+**Consequences.**
+
+- Light and dark themes, the user's accent colour, high-contrast mode and
+  font scaling all work for free and keep working. A hand-rolled palette
+  breaks the moment someone switches theme, and would be ours to maintain.
+- Existing style classes carry the visual weight: `boxed-list`, `flat`,
+  `circular`, `suggested-action`, `destructive-action`, `dim-label`, `card`.
+  If something needs styling that these cannot express, that is a signal the
+  layout is wrong, not that we need CSS.
+- Colour never carries meaning alone — the connection test says what happened
+  in words, since `SUCCESSES` is two statuses out of ten and a green dot would
+  not explain the other eight.
+- Revisit only if a specific screen proves genuinely unbuildable within
+  libadwaita's vocabulary. Record it here if so.

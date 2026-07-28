@@ -20,8 +20,15 @@ setup:
 test:
 	$(BIN)/python -m pytest
 
+# Prefer xvfb so the suite never opens windows on the developer's screen, but
+# fall back to the running session rather than failing on a machine without it.
 test-gui:
-	xvfb-run -a $(BIN)/python -m pytest -m gui
+	@if command -v xvfb-run >/dev/null 2>&1; then \
+		xvfb-run -a $(BIN)/python -m pytest -m gui; \
+	else \
+		echo "xvfb-run not found; using the current display. 'make setup' installs xvfb."; \
+		$(BIN)/python -m pytest -m gui; \
+	fi
 
 lint:
 	$(BIN)/python -m ruff check .

@@ -159,3 +159,37 @@ def fake_bin(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> FakeBin:
     bindir.mkdir()
     monkeypatch.setenv("PATH", str(bindir))
     return FakeBin(bindir)
+
+
+@pytest.fixture
+def gtk():
+    """The GTK namespaces, or a clean skip when the typelibs are missing.
+
+    Skips rather than fails: `make test` must stay green on a machine with no
+    display and no GObject introspection data, which is the normal state of a
+    minimal CI container before the gir packages land.
+    """
+    gi = pytest.importorskip("gi", reason="PyGObject is not installed")
+    try:
+        gi.require_version("Gtk", "4.0")
+        gi.require_version("Adw", "1")
+        from gi.repository import Adw, Gtk
+    except (ImportError, ValueError) as error:  # missing typelib
+        pytest.skip(f"GTK 4 / libadwaita typelibs are missing: {error}")
+    if not Gtk.init_check():
+        pytest.skip("no display available; run under xvfb-run")
+    Adw.init()
+    return Adw, Gtk
+
+
+@pytest.fixture
+def window(gtk, fake_home: Path, fake_bin: FakeBin):
+    """A real `ParvuSshWindow` against the throwaway `$HOME`.
+
+    Never presented: the tests inspect widgets, and a window popping onto the
+    developer's screen during `make test-gui` would be its own bug.
+    """
+    from parvussh.ui.window import ParvuSshWindow
+
+    fake_bin.install("ssh", returncode=0)
+    return ParvuSshWindow()
