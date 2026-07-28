@@ -71,6 +71,10 @@ STRINGS: dict[str, str] = {
     "unsaved.heading": "Alterações não salvas",
     "unsaved.body": ("“{alias}” tem mudanças que ainda não foram gravadas no arquivo."),
     "unsaved.discard": "Descartar",
+    # -- add-option popover -----------------------------------------------
+    "addoption.tooltip": "Adicionar opção",
+    "addoption.placeholder": "Digite: ServerAlive…",
+    "addoption.no_matches": "Nenhuma opção com esse nome.",
     # -- option rows ------------------------------------------------------
     "rows.remove_tooltip": "Remover {name}",
     "rows.hint_with_example": "{description}  ex.: {example}",

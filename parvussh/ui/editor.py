@@ -15,6 +15,7 @@ from parvussh import APP_NAME  # noqa: E402
 from parvussh.core.models import Block, Entry  # noqa: E402
 from parvussh.data.keywords import BASIC, Keyword, for_option  # noqa: E402
 from parvussh.i18n import t  # noqa: E402
+from parvussh.ui.popovers import AddOptionPopover  # noqa: E402
 from parvussh.ui.rows import OptionRow  # noqa: E402
 
 EMPTY = "empty"
@@ -103,6 +104,7 @@ class Editor(Adw.NavigationPage):
 
         self.options: list[OptionRow] = []
         self.extras = Adw.PreferencesGroup(title=t("editor.group.extras"))
+        self.extras.set_header_suffix(self._extras_suffix())
         self.empty_extras = Gtk.Label(
             label=t("editor.group.extras_empty"),
             wrap=True,
@@ -116,7 +118,28 @@ class Editor(Adw.NavigationPage):
         page.add(self.extras)
         return page
 
+    def _extras_suffix(self) -> Gtk.Box:
+        self.add_popover = AddOptionPopover(
+            on_pick=self.pick_option, used=self.used_options
+        )
+        box = Gtk.Box(spacing=6)
+        box.append(
+            Gtk.MenuButton(
+                icon_name="list-add-symbolic",
+                popover=self.add_popover,
+                tooltip_text=t("addoption.tooltip"),
+                css_classes=["flat"],
+            )
+        )
+        return box
+
     # -- extra options -----------------------------------------------------
+
+    def pick_option(self, keyword: Keyword) -> None:
+        """Add an option the user chose from the popover, ready to type into."""
+        option = self.add_option(keyword)
+        self.mark_dirty()
+        option.row.grab_focus()
 
     def add_option(self, keyword: Keyword, value: str = "", comments=None) -> OptionRow:
         """Put one option row on the form and return it."""
