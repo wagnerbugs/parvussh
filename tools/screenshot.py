@@ -84,6 +84,10 @@ def steps(window: Gtk.Window, out: Path) -> Iterator[Callable[[], None]]:
     from parvussh.ui.help import HelpDialog
 
     def connection() -> None:
+        # Start from a known state. A stray keystroke reaching the window —
+        # it has happened — would leave a filter in the box and an empty list
+        # in the README, and nothing would flag the image as wrong.
+        window.sidebar.search.set_text("")
         window.sidebar.listbox.select_row(window.sidebar.rows()[0])
 
     def test_result() -> None:

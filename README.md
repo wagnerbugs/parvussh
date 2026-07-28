@@ -123,6 +123,17 @@ make run
 | `Ctrl+S` | salvar |
 | `F1` | ajuda |
 
+### Idioma
+
+A interface existe em **português e inglês**, e escolhe sozinha a partir do seu
+sistema (`LC_ALL`, `LC_MESSAGES` ou `LANG`). Para forçar um deles sem mexer nas
+configurações do sistema:
+
+```bash
+PARVUSSH_LANG=en make run     # inglês
+PARVUSSH_LANG=pt_br make run  # português
+```
+
 ### Testando sem arriscar o seu arquivo
 
 Enquanto você não confia no aplicativo, aponte ele para um `HOME` descartável:

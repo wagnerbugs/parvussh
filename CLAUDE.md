@@ -63,19 +63,18 @@ The canonical constants live in `parvussh/__init__.py` as `APP_ID` and
 | Commit messages, branch names, PR titles | English |
 | `CONTRIBUTING.md`, `docs/**`, code review notes | English |
 | Test names and test docstrings | English |
-| **Every string the user can see in the app** | **Portuguese (pt-BR)** |
+| **Every string the user can see in the app** | **`parvussh/i18n/<locale>/` only** |
 | `README.md` (public project page) | Portuguese (pt-BR) |
-| `.desktop` file `Name`/`Comment`/`Keywords` | Portuguese (pt-BR) |
-| SSH option descriptions and the key-setup guide | Portuguese (pt-BR) |
+| `.desktop` / `.metainfo.xml` default values | English, with `[pt_BR]` variants |
 
-Portuguese is allowed **only** in:
+Readable text is allowed **only** in:
 
-- `parvussh/i18n/pt_br/**` — every string the interface can show
+- `parvussh/i18n/<locale>/**` — every string the interface can show
 - `README.md`, `data/*.desktop`, `data/*.metainfo.xml`
 
 That is the whole list. In particular, `parvussh/ui/**` and `parvussh/data/**`
 contain **no** readable literals — they call `t("editor.save")`. If you find
-yourself writing Portuguese anywhere else, the string is in the wrong module.
+yourself typing a sentence anywhere else, the string is in the wrong module.
 Move it.
 
 Rationale: contributors from anywhere can read the code; users are Brazilian
@@ -83,19 +82,37 @@ developers who deserve their own language in the interface; and a language the
 app does not speak yet should cost one new directory, not a refactor.
 See `docs/DECISIONS.md` D3.
 
+### Shipped locales
+
+`pt_br` and `en`. `pt_br` is `DEFAULT_LOCALE`: the project's home language, and
+the fallback for any key a locale is missing.
+
+The active locale is chosen from the environment the first time a string is
+asked for — `LC_ALL`, then `LC_MESSAGES`, then `LANG`, with `PARVUSSH_LANG`
+overriding all three. An exact match wins; failing that, the language alone
+(`pt_PT` settles for `pt_br`); anything unknown falls back to the default.
+
+```bash
+PARVUSSH_LANG=en make run      # read the interface in the other language
+```
+
+Adding a language is a sibling directory with the same keys. Four tests hold
+the catalogs together: identical key sets, identical `{placeholders}`, no
+sentence left in the source language, and every `t("…")` literal in `ui/**`
+resolving.
+
 ### Using `t()`
 
 ```python
 from parvussh.i18n import t
 
-t("editor.save")                     # -> "Salvar"
-t("editor.saved_toast", path=path)   # -> "Salvo em ~/.ssh/config"
+t("editor.save")                     # -> "Salvar" / "Save"
+t("save.done", path="~/.ssh/config") # -> "Salvo em ~/.ssh/config"
 ```
 
 Keys are English, dotted, and named after where the string appears
 (`sidebar.`, `editor.`, `dialog.`, `test.`, `kw.<Option>.`, `guide.`). A
-missing key returns the key itself, so a half-translated build still opens;
-`tests/test_i18n.py` fails when a key used in code is absent from a catalog.
+missing key returns the key itself, so a half-translated build still opens.
 
 ---
 

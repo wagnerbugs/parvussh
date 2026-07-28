@@ -7,36 +7,65 @@
   <project_license>GPL-3.0-or-later</project_license>
 
   <name>ParvuSsh</name>
-  <summary>Gerencie suas conexões SSH sem sair do ~/.ssh/config</summary>
+  <summary>Manage your SSH connections without leaving ~/.ssh/config</summary>
   <summary xml:lang="pt_BR">Gerencie suas conexões SSH sem sair do ~/.ssh/config</summary>
 
   <description>
     <p>
+      ParvuSsh reads and writes your real ~/.ssh/config. There is no parallel
+      database, no proprietary format and no import step: what you see in the
+      app is what is in the file, and what you save keeps working in the
+      terminal, in scp, in rsync and in Git.
+    </p>
+    <p xml:lang="pt_BR">
       O ParvuSsh lê e escreve o seu arquivo ~/.ssh/config de verdade. Não há
       banco de dados paralelo, formato proprietário nem etapa de importação:
       o que você vê no aplicativo é o que está no arquivo, e o que você salva
       continua funcionando no terminal, no scp, no rsync e no Git.
     </p>
     <p>
+      It is built for someone who looks after a handful of servers and is tired
+      of opening the config in a text editor to remember which alias they used.
+      The fields carry the real OpenSSH option names, with a plain-language
+      explanation beside them, so you can look up in the manual exactly what is
+      on your screen.
+    </p>
+    <p xml:lang="pt_BR">
       Ele foi feito para quem cuida de alguns servidores e cansou de abrir o
       config num editor de texto para lembrar qual apelido usou. Os campos
-      levam o nome real das opções do OpenSSH, com uma explicação em português
-      ao lado — dá para procurar no manual exatamente o que aparece na tela.
+      levam o nome real das opções do OpenSSH, com uma explicação ao lado — dá
+      para procurar no manual exatamente o que aparece na tela.
     </p>
-    <p>Principais recursos:</p>
+    <p>Main features:</p>
+    <p xml:lang="pt_BR">Principais recursos:</p>
     <ul>
-      <li>Lista, filtra e edita as conexões do seu ~/.ssh/config</li>
-      <li>Catálogo de 50 opções do SSH, buscáveis por nome ou pelo que fazem</li>
-      <li>Cria chaves ed25519, ecdsa ou rsa e escolhe qual usar em cada conexão</li>
-      <li>Testa a conexão antes de salvar, e explica em português o que deu errado</li>
-      <li>Guia passo a passo de como criar e instalar uma chave num servidor</li>
-      <li>Backup datado antes de cada gravação, e validação com ssh -G</li>
+      <li>Lists, filters and edits the connections in your ~/.ssh/config</li>
+      <li xml:lang="pt_BR">Lista, filtra e edita as conexões do seu ~/.ssh/config</li>
+      <li>A catalog of 50 SSH options, searchable by name or by what they do</li>
+      <li xml:lang="pt_BR">Catálogo de 50 opções do SSH, buscáveis por nome ou pelo que fazem</li>
+      <li>Creates ed25519, ecdsa or rsa keys and picks which one each connection uses</li>
+      <li xml:lang="pt_BR">Cria chaves ed25519, ecdsa ou rsa e escolhe qual usar em cada conexão</li>
+      <li>Tests the connection before saving, and explains what went wrong</li>
+      <li xml:lang="pt_BR">Testa a conexão antes de salvar, e explica o que deu errado</li>
+      <li>A step-by-step guide to creating a key and installing it on a server</li>
+      <li xml:lang="pt_BR">Guia passo a passo de como criar e instalar uma chave num servidor</li>
+      <li>A dated backup before every write, and validation with ssh -G</li>
+      <li xml:lang="pt_BR">Backup datado antes de cada gravação, e validação com ssh -G</li>
     </ul>
     <p>
+      Blocks you did not edit go back to the file byte for byte, with comments,
+      indentation and unknown options intact.
+    </p>
+    <p xml:lang="pt_BR">
       Blocos que você não editou voltam para o arquivo byte por byte, com
       comentários, indentação e opções desconhecidas intactos.
     </p>
   </description>
+
+  <languages>
+    <lang percentage="100">pt_BR</lang>
+    <lang percentage="100">en</lang>
+  </languages>
 
   <launchable type="desktop-id">io.github.wagnerbugs.ParvuSsh.desktop</launchable>
 

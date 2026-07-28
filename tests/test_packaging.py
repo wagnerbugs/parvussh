@@ -86,9 +86,23 @@ def test_the_desktop_categories_are_the_documented_ones() -> None:
     assert desktop_entry()["Categories"] == "Network;RemoteAccess;"
 
 
-def test_the_desktop_comment_is_in_portuguese() -> None:
-    """Everything the user reads is pt-BR, including the launcher tooltip."""
-    assert "conexões SSH" in desktop_entry()["Comment"]
+def test_the_desktop_entry_is_translated() -> None:
+    """freedesktop: the unsuffixed value is English, `[pt_BR]` translates it."""
+    entry = desktop_entry()
+    assert "SSH connections" in entry["Comment"]
+    assert "conexões SSH" in entry["Comment[pt_BR]"]
+    assert "conexão" in entry["Keywords[pt_BR]"]
+
+
+def test_every_shipped_locale_is_declared_in_the_metainfo() -> None:
+    """App stores use this to say whether the app speaks the user's language."""
+    from parvussh.i18n import available_locales
+
+    root = ET.parse(METAINFO).getroot()
+    languages = root.find("languages")
+    assert languages is not None
+    declared = {(lang.text or "").lower() for lang in languages}
+    assert declared == {locale.lower() for locale in available_locales()}
 
 
 # -- the appstream metadata ------------------------------------------------

@@ -528,6 +528,53 @@ Worth remembering: this banner only appears once crypto has been negotiated, so
 its presence is itself evidence the server answered. Not encoded — but if the
 interpretation table ever needs a tie-breaker, that is a real signal.
 
+### English translation — D3 paying off
+
+The whole point of `docs/DECISIONS.md` D3 was that a second language should
+cost one directory. It did: `parvussh/i18n/en/` with the same keys, and **not
+one line of `ui/` or `data/` changed**. Worth remembering the next time a
+structural decision looks like over-engineering.
+
+**Locale selection.** `current_locale()` resolves lazily from the environment
+the first time a string is asked for, rather than at import. No import-time
+side effect, and any entry point — including a future CLI — gets it right
+without remembering to call anything. Order: `PARVUSSH_LANG`, then `LC_ALL`,
+`LC_MESSAGES`, `LANG`. Exact match wins; failing that the language alone, so
+`pt_PT` settles for `pt_br`; anything unknown falls back to `DEFAULT_LOCALE`.
+
+**Four tests hold the catalogs together**, and the interesting one is
+`test_no_prose_was_left_in_the_source_language`. My first version flagged 33
+keys and was simply wrong: `kw.*.example` holds config *values* —
+`~/.ssh/id_ed25519`, `curve25519-sha256`, `8080 localhost:80` — which are
+identical in every language, and their being identical proves nothing. The test
+now separates prose from values with `is_prose()`, and a second test asserts
+the handful of examples that *do* carry language (`LANG=pt_BR.UTF-8` vs
+`en_GB.UTF-8`, `vps.exemplo.com` vs `vps.example.com`) really differ.
+
+Also pinned: identical `{placeholders}` across locales. A `{path}` translated
+to `{caminho}` would raise `KeyError` at runtime, in front of the user.
+
+**Packaging follows freedesktop now:** unsuffixed values are English,
+`Comment[pt_BR]` and `Keywords[pt_BR]` translate them, and the metainfo gained
+`<languages>`. A test asserts that block matches `available_locales()`, so
+adding a language and forgetting the metadata fails.
+
+`appstreamcli validate` leaves two notes, both fine and neither worth chasing:
+`cid-contains-uppercase-letter` (GNOME app ids do use CamelCase — see
+`org.gnome.TextEditor`) and `url-not-reachable` (the repository is private, so
+an anonymous fetch gets a 404).
+
+### A screenshot that lied, twice
+
+The first English render came out with `iote` typed in the filter box and an
+empty connection list — under `xvfb`, on an isolated `:99`. Two consecutive
+re-runs were clean, so it was not reproducible, and the earlier `updatre`
+incident on the live display had a different cause (focus stealing).
+
+Not chased further, but `tools/screenshot.py` now clears the search box before
+capturing. A README image that quietly shows a filtered, empty app is the kind
+of wrong that nothing else would catch.
+
 ### Known deviation: two files are over the size guideline
 
 `CLAUDE.md` §3 says a file past ~250 lines is usually two ideas sharing a name.

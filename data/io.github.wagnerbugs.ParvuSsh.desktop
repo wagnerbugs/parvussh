@@ -2,8 +2,12 @@
 Type=Application
 Version=1.5
 Name=ParvuSsh
-Comment=Gerencie suas conexões SSH lendo e escrevendo o ~/.ssh/config de verdade
-Keywords=ssh;conexão;conexao;servidor;vps;chave;terminal;remoto;config;
+# freedesktop convention: the unsuffixed value is English, and each
+# translation gets its own [locale] key.
+Comment=Manage your SSH connections by reading and writing the real ~/.ssh/config
+Comment[pt_BR]=Gerencie suas conexões SSH lendo e escrevendo o ~/.ssh/config de verdade
+Keywords=ssh;connection;server;vps;key;terminal;remote;config;
+Keywords[pt_BR]=ssh;conexão;conexao;servidor;vps;chave;terminal;remoto;config;
 Exec=parvussh
 Icon=io.github.wagnerbugs.ParvuSsh
 Terminal=false
