@@ -316,17 +316,29 @@ feat(ui): list connections in a filterable sidebar
 
 ## M8 — Editor form, basic fields
 
-- [ ] `parvussh/ui/editor.py` — the `Conexão` group with Host / HostName / User /
+- [x] `parvussh/ui/editor.py` — the `Conexão` group with Host / HostName / User /
   Port, the dirty-state guard, header title with `• ` prefix
-- [ ] Save path: validation messages, entry rebuild with comment carry-over,
+- [x] Save path: validation messages, entry rebuild with comment carry-over,
   toast, sidebar refresh keeping the selection (SPEC §7)
-- [ ] Unsaved-changes `Adw.AlertDialog` on row switch
-- [ ] GUI test: edit `HostName`, save, re-read the file from disk and assert
+- [x] Unsaved-changes `Adw.AlertDialog` on row switch, with the selection put
+  back when the save is refused
+- [x] GUI test: edit `HostName`, save, re-read the file from disk and assert
   the new value is there **and** that a sibling block is unchanged
-- [ ] GUI test: empty alias refuses to save and shows the toast
+- [x] GUI test: empty alias refuses to save and shows the toast
 
 **Gate:** edit, save, reopen — the change is on disk and the rest of the file
-is untouched.
+is untouched. 68 gui tests pass, 206 headless tests green.
+
+**Bug the tests caught:** `Editor.apply()` marked the block dirty unconditionally,
+so pressing Ctrl+S twice wrote the file twice and left **two** dated backups.
+Over a session that quietly fills `~/.ssh` with copies. `apply()` now compares
+patterns and entries first and does nothing when they match; the toast says
+"Nada mudou desde o último salvamento."
+
+**Carried over deliberately:** options the form does not render yet
+(`IdentityFile` and friends) are copied through untouched by `apply()`.
+Rebuilding entries from the visible fields alone would have deleted a host's
+key on the first save. M9 replaces that carry-over with real option rows.
 
 ```
 feat(ui): edit and save the core connection fields

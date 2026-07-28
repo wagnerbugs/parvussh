@@ -282,4 +282,54 @@ reporting it as missing invents a problem. Visible in `scratchpad/m7.png`.
 burying the test output. The filters are module-scoped to `gi.*`, so warnings
 from our code still surface.
 
-**Next session starts with.** M8 — the editor form and the save path.
+### M8 — the form and the save path
+
+**The bug the tests caught.** `Editor.apply()` set `block.dirty = True` every
+time, so pressing Ctrl+S twice wrote the file twice and left *two* dated
+backups. Nobody would notice until `~/.ssh` had forty copies of their config.
+`apply()` now compares `patterns` and `entries` first and returns without
+touching anything when they match. `save_current()` says "Nada mudou desde o
+último salvamento." rather than claiming a save that did not happen.
+
+`Block` is `eq=False` (M2) but `Entry` is a normal dataclass, so
+`block.entries == entries` is the value comparison this needs. That is why the
+two classes differ, and it is worth keeping that way.
+
+**The carry-over that prevents data loss.** The M8 form shows Host, HostName,
+User and Port. `apply()` rebuilds the entry list — so without care, saving a
+host would have deleted its `IdentityFile`. Every entry outside `BASIC` is
+copied through untouched, and `test_an_option_the_form_does_not_show_yet_survives`
+pins it. M9 replaces the carry-over with real option rows; **do not delete
+that test when it does** — reword it for uncatalogued options instead.
+
+**A failed save must not strand the user.** When the unsaved-changes dialog's
+"Salvar" is refused (empty alias, ssh rejects the config), the list has already
+moved the selection. `Sidebar.select_silently()` puts it back without
+re-reporting it as a user choice. The prototype left the user looking at a row
+whose form was never loaded.
+
+### Rendering the UI without hijacking the session
+
+**What went wrong.** `scratchpad/shoot.py` calls `window.present()`, and on this
+machine that means presenting onto the owner's live desktop. One render stole
+keyboard focus mid-typing and captured the stray text in the search box —
+visible in `scratchpad/m8.png`, which shows "updatre" in the filter and an
+empty list because of it.
+
+**The fix, and it needs no new packages.** `gtk4-broadwayd` ships with GTK and
+is already installed:
+
+```bash
+gtk4-broadwayd :5 &            # a display that is not the user's screen
+GDK_BACKEND=broadway BROADWAY_DISPLAY=:5 python scratchpad/shoot.py out.png "$HOME"
+```
+
+Windows render into broadway instead of the session. `scratchpad/m8b.png` is
+the result. Icons fall back to a different theme under broadway, so judge
+layout and text there, not iconography.
+
+The test suite never presents a window, so `make test-gui` was never affected —
+this only ever applied to the screenshot script. `xvfb` is still worth
+installing for CI.
+
+**Next session starts with.** M9 — typed option rows, one widget per kind.

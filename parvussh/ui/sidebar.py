@@ -192,3 +192,14 @@ class Sidebar(Adw.NavigationPage):
 
     def row_for(self, block: Block) -> Adw.ActionRow | None:
         return next((row for row in self.rows() if row.block is block), None)
+
+    def select_silently(self, block: Block | None) -> None:
+        """Move the selection without reporting it as a user choice.
+
+        Used to put the selection back after a refused save: the list has
+        already moved, but nobody asked to open a different connection.
+        """
+        row = self.row_for(block) if block is not None else None
+        self._rebuilding = True
+        self.listbox.select_row(row)
+        self._rebuilding = False

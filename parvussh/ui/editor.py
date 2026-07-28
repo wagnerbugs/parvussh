@@ -1,9 +1,8 @@
-"""The right column: the form for one connection.
-
-At M6 this is the header bar and the empty state. M8 adds the form.
-"""
+"""The right column: the form for one connection."""
 
 from __future__ import annotations
+
+from collections.abc import Callable
 
 import gi
 
@@ -13,18 +12,28 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gio, Gtk  # noqa: E402
 
 from parvussh import APP_NAME  # noqa: E402
-from parvussh.core.models import Block  # noqa: E402
+from parvussh.core.models import Block, Entry  # noqa: E402
+from parvussh.data.keywords import BASIC  # noqa: E402
 from parvussh.i18n import t  # noqa: E402
 
 EMPTY = "empty"
 FORM = "form"
+DIRTY_PREFIX = "• "
+BASIC_LOWER = {name.lower() for name in BASIC}
 
 
 class Editor(Adw.NavigationPage):
-    """`Adw.NavigationPage` holding the connection form and its empty state."""
+    """The connection form, its empty state, and the unsaved-changes flag."""
 
-    def __init__(self) -> None:
+    def __init__(self, on_dirty: Callable[[], None] | None = None) -> None:
         super().__init__(title=t("editor.title"))
+        self.on_dirty = on_dirty
+        self.block: Block | None = None
+        self.dirty = False
+        # Set while fields are being filled from a block: a programmatic
+        # set_text emits `changed` exactly like a keystroke, and without this
+        # merely opening a connection would mark it edited.
+        self._loading = False
 
         self.title_widget = Adw.WindowTitle(title=APP_NAME)
         self.header = self._header()
@@ -37,11 +46,14 @@ class Editor(Adw.NavigationPage):
 
         self.stack = Gtk.Stack()
         self.stack.add_named(self.placeholder, EMPTY)
+        self.stack.add_named(self._form(), FORM)
 
         view = Adw.ToolbarView()
         view.add_top_bar(self.header)
         view.set_content(self.stack)
         self.set_child(view)
+
+    # -- construction ------------------------------------------------------
 
     def _header(self) -> Adw.HeaderBar:
         header = Adw.HeaderBar(title_widget=self.title_widget)
@@ -73,14 +85,114 @@ class Editor(Adw.NavigationPage):
         )
         return header
 
+    def _form(self) -> Adw.PreferencesPage:
+        self.host = Adw.EntryRow(title=t("editor.field.host"))
+        self.hostname = Adw.EntryRow(title=t("editor.field.hostname"))
+        self.user = Adw.EntryRow(title=t("editor.field.user"))
+        self.port = Adw.EntryRow(title=t("editor.field.port"))
+        self.port.set_input_purpose(Gtk.InputPurpose.DIGITS)
+
+        basics = Adw.PreferencesGroup(
+            title=t("editor.group.connection"),
+            description=t("editor.group.connection_description"),
+        )
+        for row in (self.host, self.hostname, self.user, self.port):
+            row.connect("changed", lambda *_a: self.mark_dirty())
+            basics.add(row)
+
+        page = Adw.PreferencesPage()
+        page.add(basics)
+        return page
+
+    def _basic_rows(self) -> tuple[tuple[str, Adw.EntryRow], ...]:
+        """The three catalogued fields, in the order they are written out."""
+        return (
+            ("HostName", self.hostname),
+            ("User", self.user),
+            ("Port", self.port),
+        )
+
+    # -- loading -----------------------------------------------------------
+
     def show_block(self, block: Block | None, source: str = "") -> None:
-        """Display `block`, or the empty state when there is nothing selected."""
+        """Display `block`, or the empty state when nothing is selected."""
+        self.block = block
+        self.dirty = False
+
         if block is None:
             self.stack.set_visible_child_name(EMPTY)
             self.title_widget.set_title(APP_NAME)
             self.title_widget.set_subtitle("")
             return
 
+        self._loading = True
+        self.host.set_text(block.title)
+        self.hostname.set_text(block.get("HostName"))
+        self.user.set_text(block.get("User"))
+        self.port.set_text(block.get("Port"))
+        self._loading = False
+
         self.title_widget.set_title(block.title)
         self.title_widget.set_subtitle(source)
         self.stack.set_visible_child_name(FORM)
+
+    def focus_alias(self) -> None:
+        self.host.grab_focus()
+
+    # -- editing -----------------------------------------------------------
+
+    def mark_dirty(self) -> None:
+        if self._loading or self.block is None:
+            return
+        self.dirty = True
+        self.title_widget.set_title(DIRTY_PREFIX + self.host.get_text().strip())
+        if self.on_dirty is not None:
+            self.on_dirty()
+
+    def mark_clean(self) -> None:
+        self.dirty = False
+        if self.block is not None:
+            self.title_widget.set_title(self.block.title)
+
+    def apply(self) -> str | None:
+        """Write the form back into the block. Returns a message, or None.
+
+        Nothing reaches disk here — this only updates the in-memory block and
+        marks it dirty. `ConfigSet.save()` is what writes.
+        """
+        block = self.block
+        if block is None:
+            return None
+
+        alias = self.host.get_text().strip()
+        if not alias:
+            return t("editor.error.empty_alias")
+        port = self.port.get_text().strip()
+        if port and not port.isdigit():
+            return t("editor.error.port_not_a_number")
+
+        # Comments belong to the directive below them and must survive an edit.
+        comments = {entry.keyword.lower(): entry.comments for entry in block.entries}
+        entries = [
+            Entry(name, row.get_text().strip(), comments.get(name.lower(), []))
+            for name, row in self._basic_rows()
+            if row.get_text().strip()
+        ]
+        # Everything the form does not show yet is carried over untouched.
+        # M9 replaces this with the typed option rows; dropping the entries
+        # here would silently delete a host's IdentityFile on the first save.
+        entries.extend(
+            entry for entry in block.entries if entry.keyword.lower() not in BASIC_LOWER
+        )
+
+        patterns = alias.split()
+        if block.patterns == patterns and block.entries == entries:
+            # Nothing actually changed. Marking the block dirty anyway would
+            # rewrite the file and leave a dated backup behind every time
+            # someone pressed Ctrl+S, quietly filling ~/.ssh with copies.
+            return None
+
+        block.patterns = patterns
+        block.entries = entries
+        block.dirty = True
+        return None

@@ -45,6 +45,28 @@ STRINGS: dict[str, str] = {
     "editor.more_tooltip": "Mais ações",
     "editor.empty.title": "Escolha uma conexão",
     "editor.empty.description": "Ou use o + para cadastrar a primeira.",
+    "editor.group.connection": "Conexão",
+    "editor.group.connection_description": (
+        "Deixe em branco o que não usar: campos vazios não vão para o arquivo."
+    ),
+    # Labels carry the real OpenSSH option name so the user can look it up.
+    "editor.field.host": "Host — o apelido que você digita",
+    "editor.field.hostname": "HostName — endereço real",
+    "editor.field.user": "User",
+    "editor.field.port": "Port",
+    "editor.error.empty_alias": "O apelido em Host não pode ficar vazio.",
+    "editor.error.port_not_a_number": "Port aceita apenas números.",
+    # -- saving -----------------------------------------------------------
+    "new.alias": "nova-conexao",
+    "save.done": "Salvo em {path}",
+    "save.nothing_changed": "Nada mudou desde o último salvamento.",
+    "save.failed.heading": "O arquivo não foi gravado",
+    "save.failed.body": (
+        "O ssh recusou a configuração, então nada foi alterado no disco."
+    ),
+    "unsaved.heading": "Alterações não salvas",
+    "unsaved.body": ("“{alias}” tem mudanças que ainda não foram gravadas no arquivo."),
+    "unsaved.discard": "Descartar",
     # -- dialogs ----------------------------------------------------------
     "dialog.understood": "Entendi",
     "dialog.close": "Fechar",

@@ -20,6 +20,7 @@ from gi.repository import Adw, Gio  # noqa: E402
 from parvussh import APP_NAME  # noqa: E402
 from parvussh.core.models import Block  # noqa: E402
 from parvussh.core.store import ConfigSet  # noqa: E402
+from parvussh.core.writer import ConfigError  # noqa: E402
 from parvussh.i18n import t  # noqa: E402
 from parvussh.ui.editor import Editor  # noqa: E402
 from parvussh.ui.sidebar import Sidebar  # noqa: E402
@@ -61,6 +62,7 @@ class ParvuSshWindow(Adw.ApplicationWindow):
 
         self.sidebar = Sidebar(on_select=self._on_block_selected)
         self.editor = Editor()
+
         self.split.set_sidebar(self.sidebar)
         self.split.set_content(self.editor)
 
@@ -111,7 +113,39 @@ class ParvuSshWindow(Adw.ApplicationWindow):
         return self.config.hosts if self.config is not None else []
 
     def _on_block_selected(self, block: Block | None) -> None:
+        switching_away = (
+            self.editor.dirty and self.current is not None and block is not self.current
+        )
+        if switching_away:
+            self._ask_about_unsaved(block)
+            return
         self._show_block(block)
+
+    def _ask_about_unsaved(self, pending: Block | None) -> None:
+        """Offer to save before leaving a connection with unsaved edits."""
+        leaving = self.current
+        dialog = Adw.AlertDialog(
+            heading=t("unsaved.heading"),
+            body=t("unsaved.body", alias=leaving.title if leaving else ""),
+        )
+        dialog.add_response("discard", t("unsaved.discard"))
+        dialog.add_response("save", t("editor.save"))
+        dialog.set_response_appearance("save", Adw.ResponseAppearance.SUGGESTED)
+        dialog.set_default_response("save")
+        dialog.set_close_response("discard")
+
+        def answered(_dialog: Adw.AlertDialog, response: str) -> None:
+            if response == "save" and not self.save_current(silent=True):
+                # The save was refused, so the edit still exists. Put the
+                # selection back where it was rather than stranding the user
+                # on a row whose form they never saw.
+                self.sidebar.select_silently(leaving)
+                return
+            self.editor.mark_clean()
+            self._show_block(pending)
+
+        dialog.connect("response", answered)
+        dialog.present(self)
 
     def _show_block(self, block: Block | None) -> None:
         self.current = block
@@ -131,11 +165,44 @@ class ParvuSshWindow(Adw.ApplicationWindow):
         """Filled in at M13, once `data/guide.py` exists."""
 
     def new_host(self) -> None:
-        """Filled in at M8, once the editor can write a block back."""
+        """Append an empty connection and put the cursor in its alias field."""
+        if self.config is None:
+            return
+        block = self.config.add_host(t("new.alias"))
+        self.refresh_list(select=block)
+        self.editor.focus_alias()
 
-    def save_current(self) -> bool:
-        """Filled in at M8."""
-        return False
+    def save_current(self, silent: bool = False) -> bool:
+        """Write the form to disk. Returns whether anything was saved."""
+        if self.current is None or self.config is None:
+            return False
+
+        problem = self.editor.apply()
+        if problem is not None:
+            self.toast(problem)
+            return False
+
+        try:
+            written = self.config.save()
+        except ConfigError as error:
+            self.show_message(
+                t("save.failed.heading"),
+                f"{t('save.failed.body')}\n\n{error}".strip(),
+            )
+            return False
+        except OSError as error:
+            self.show_message(t("save.failed.heading"), str(error))
+            return False
+
+        self.editor.mark_clean()
+        self.refresh_list(select=self.current)
+        if not silent:
+            self.toast(
+                t("save.done", path=shorten_home(written[0]))
+                if written
+                else t("save.nothing_changed")
+            )
+        return True
 
     def test_current(self) -> None:
         """Filled in at M12."""
