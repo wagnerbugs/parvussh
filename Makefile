@@ -9,7 +9,7 @@ APT_PACKAGES := python3-gi python3-gi-cairo gir1.2-gtk-4.0 gir1.2-adw-1 \
                 openssh-client xvfb
 
 .PHONY: setup test test-gui lint format run check clean \
-        install-user uninstall-user screenshots
+        install-user uninstall-user screenshots icon-preview
 
 setup:
 	sudo apt install -y $(APT_PACKAGES)
@@ -80,3 +80,7 @@ uninstall-user:
 # Regenerate the README images from a sample config.
 screenshots:
 	xvfb-run -a $(BIN)/python tools/screenshot.py docs/screenshots
+
+# Regenerate docs/icon-preview.png from the committed SVGs.
+icon-preview:
+	$(BIN)/python tools/icon_preview.py docs/icon-preview.png

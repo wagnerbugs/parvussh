@@ -575,6 +575,45 @@ Not chased further, but `tools/screenshot.py` now clears the search box before
 capturing. A README image that quietly shows a filtered, empty app is the kind
 of wrong that nothing else would catch.
 
+### New icon, and where incoming files belong
+
+The owner brought icons designed elsewhere, dropped in a `files/` folder.
+There is no such convention here and there does not need to be — the repository
+already has a home for each kind of thing. They went to:
+
+| From `files/` | To |
+|---|---|
+| `io.github.wagnerbugs.ParvuSsh.svg` | `data/icons/hicolor/scalable/apps/` |
+| `io.github.wagnerbugs.ParvuSsh-symbolic.svg` | `data/icons/hicolor/symbolic/apps/` |
+| `ICONS.md` | `docs/ICONS.md` (English, per CLAUDE.md §2) |
+| `preview.png` | regenerated as `docs/icon-preview.png` |
+
+`files/` deleted. The two SVG names must match `APP_ID` exactly, which
+`tests/test_packaging.py` already pins.
+
+**Checked rather than assumed**, before replacing anything:
+
+- Rasterised both at 128/64/48/32 and 32/16. The app icon still reads at 32px;
+  the symbolic outline holds at 16.
+- `Gtk.IconTheme.lookup_icon(...).is_symbolic()` returns `True` and the artwork
+  recolours to an arbitrary RGBA. This was the one real risk: the file uses
+  `fill="#000"` rather than the `#bebebe` that older symbolic icons used, and
+  it turns out GTK keys off the `-symbolic` suffix and the `symbolic/`
+  directory, not the fill colour.
+
+That check also caught something worth knowing: the icon it rendered was the
+*old* one, because `~/.local/share/icons` from `make install-user` shadows the
+source tree. Re-run `make install-user` after changing an icon.
+
+**The preview is regenerated, not trusted.** `tools/icon_preview.py` reads the
+committed SVGs and rasterises them on light and dark, standing in for GTK's
+recolouring. Same reasoning as `make screenshots`: an image in `docs/` that can
+silently drift from the thing it documents is worse than no image.
+
+It uses librsvg through PyGObject rather than `rsvg-convert`, so it needs no
+package that is not already installed — `Gdk.Texture.new_from_filename` and
+`GdkPixbuf` both refuse SVG here, which is worth remembering.
+
 ### Known deviation: two files are over the size guideline
 
 `CLAUDE.md` §3 says a file past ~250 lines is usually two ideas sharing a name.

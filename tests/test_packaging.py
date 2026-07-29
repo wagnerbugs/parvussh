@@ -156,3 +156,26 @@ def test_the_symbolic_icon_is_the_size_gnome_expects() -> None:
 def test_the_app_icon_is_square() -> None:
     root = ET.parse(ICON).getroot()
     assert root.get("width") == root.get("height")
+
+
+def test_the_app_icon_uses_the_canvas_gnome_expects() -> None:
+    root = ET.parse(ICON).getroot()
+    assert root.get("viewBox") == "0 0 128 128"
+
+
+@pytest.mark.parametrize("path", [ICON, SYMBOLIC])
+def test_the_icon_names_itself(path: Path) -> None:
+    """`<title>` is what a screen reader announces, and proof of a whole file."""
+    root = ET.parse(path).getroot()
+    title = root.find("{http://www.w3.org/2000/svg}title")
+    assert title is not None and title.text == "ParvuSsh"
+
+
+@pytest.mark.parametrize("path", [ICON, SYMBOLIC])
+def test_the_icons_are_licensed(path: Path) -> None:
+    assert "SPDX-License-Identifier: GPL-3.0-or-later" in path.read_text()
+
+
+def test_the_icon_preview_is_present() -> None:
+    """docs/ICONS.md embeds it; a missing file leaves a broken image."""
+    assert (ROOT / "docs" / "icon-preview.png").is_file()

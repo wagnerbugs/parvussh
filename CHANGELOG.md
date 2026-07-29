@@ -14,6 +14,13 @@ format. Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - `.desktop` and AppStream metadata now follow the freedesktop convention:
   English defaults with `[pt_BR]` variants, and a `<languages>` block.
 
+### Changed
+
+- **New icon.** A tag with a `>` prompt, replacing the key. Naming a machine is
+  what the app actually does, and a key is the symbol every password manager
+  already owns. `docs/ICONS.md` has the metaphor, the GNOME HIG rules it
+  follows and how to check a change.
+
 ### Fixed
 
 - Config text is no longer parsed as Pango markup. `RemoteCommand cd /srv/app

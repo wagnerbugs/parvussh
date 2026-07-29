@@ -1,37 +1,20 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!--
   ParvuSsh application icon.
 
-  A key, because that is what SSH means to the person using this app, on the
-  rounded square GNOME expects. Deliberately geometric: it has to stay
-  readable at 32px in a dock and at 16px in a window list.
-
+  Design notes, the metaphor and the HIG rules it follows: docs/ICONS.md
   SPDX-License-Identifier: GPL-3.0-or-later
 -->
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <title>ParvuSsh</title>
+  <desc>A tag — the app gives your servers a name you can remember. GNOME HIG palette: Blue 3 top surface, Blue 4 front profile, Blue 5 eyelet.</desc>
   <defs>
-    <linearGradient id="plate" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#5b7cfa"/>
-      <stop offset="1" stop-color="#3a48c8"/>
-    </linearGradient>
-    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
-      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0"/>
-    </linearGradient>
-    <!-- The bow's hole shows the plate through it, not a painted circle. -->
-    <mask id="bow-hole">
-      <rect x="0" y="0" width="128" height="128" fill="#ffffff"/>
-      <circle cx="47" cy="64" r="8.5" fill="#000000"/>
-    </mask>
+    <clipPath id="body">
+      <path d="M 56 20 H 104 A 12 12 0 0 1 116 32 V 96 A 12 12 0 0 1 104 108 H 36 A 12 12 0 0 1 24 96 V 52 Z"/>
+    </clipPath>
   </defs>
-
-  <rect x="8" y="8" width="112" height="112" rx="27" fill="url(#plate)"/>
-  <rect x="8" y="8" width="112" height="112" rx="27" fill="url(#sheen)"/>
-
-  <g mask="url(#bow-hole)" fill="#ffffff">
-    <circle cx="47" cy="64" r="20"/>
-    <rect x="62" y="59" width="42" height="10" rx="5"/>
-    <rect x="79" y="68" width="8" height="10" rx="3"/>
-    <rect x="93" y="68" width="8" height="15" rx="3"/>
-  </g>
+  <path d="M 56 20 H 104 A 12 12 0 0 1 116 32 V 96 A 12 12 0 0 1 104 108 H 36 A 12 12 0 0 1 24 96 V 52 Z" fill="#1c71d8"/>
+  <rect x="0" y="0" width="128" height="104" fill="#3584e4" clip-path="url(#body)"/>
+  <circle cx="48" cy="44" r="7.5" fill="#1a5fb4"/>
+  <path d="M 60 52 L 75 66 L 60 80" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="85" y="72" width="22" height="8" rx="4" fill="#ffffff"/>
 </svg>
