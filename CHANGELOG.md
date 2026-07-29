@@ -5,28 +5,6 @@ format. Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
-### Added
-
-- **English translation.** The interface now ships in `pt_br` and `en`, chosen
-  from `LC_ALL` / `LC_MESSAGES` / `LANG`, with `PARVUSSH_LANG` overriding.
-  Adding a language is a sibling directory under `parvussh/i18n/` with the same
-  keys — no change to `ui/` or `data/`, which was the point of the split.
-- `.desktop` and AppStream metadata now follow the freedesktop convention:
-  English defaults with `[pt_BR]` variants, and a `<languages>` block.
-
-### Changed
-
-- **New icon.** A tag with a `>` prompt, replacing the key. Naming a machine is
-  what the app actually does, and a key is the symbol every password manager
-  already owns. `docs/ICONS.md` has the metaphor, the GNOME HIG rules it
-  follows and how to check a change.
-
-### Fixed
-
-- Config text is no longer parsed as Pango markup. `RemoteCommand cd /srv/app
-  && bash -l` rendered as nothing at all, because every `Adw.PreferencesRow`
-  treats its title and subtitle as markup by default.
-
 ## [0.1.0] — 2026-07-28
 
 First version. Reads and writes the real `~/.ssh/config`.
@@ -56,7 +34,13 @@ First version. Reads and writes the real `~/.ssh/config`.
   definition wins, not the last.
 - **Duplicate and delete**, with confirmation. Duplicating twice never reuses
   an alias, because the second block would be dead text.
-- `.desktop` file and icons, installable per user with `make install-user`.
+- **Portuguese and English**, picked from `LC_ALL` / `LC_MESSAGES` / `LANG`,
+  with `PARVUSSH_LANG` overriding. Adding a language is a sibling directory
+  under `parvussh/i18n/` with the same keys, and nothing else.
+- `.desktop` file, AppStream metadata and icons, installable per user with
+  `make install-user`. The icon is a tag carrying a `>` prompt — naming a
+  machine is what the app does, and a key is the symbol every password manager
+  already owns. See `docs/ICONS.md`.
 
 ### The config contract
 
