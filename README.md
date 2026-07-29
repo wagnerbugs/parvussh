@@ -126,13 +126,25 @@ make run
 ### Idioma
 
 A interface existe em **português e inglês**, e escolhe sozinha a partir do seu
-sistema (`LC_ALL`, `LC_MESSAGES` ou `LANG`). Para forçar um deles sem mexer nas
-configurações do sistema:
+sistema (`LC_ALL`, `LC_MESSAGES` ou `LANG`). Trocar o idioma do GNOME troca o
+do aplicativo junto — é como aplicativos GNOME funcionam, e por isso não há
+seletor de idioma dentro dele.
+
+Para uma execução avulsa:
 
 ```bash
 PARVUSSH_LANG=en make run     # inglês
 PARVUSSH_LANG=pt_br make run  # português
 ```
+
+Para fixar no lançador do menu, sem mexer no sistema:
+
+```bash
+make install-user PARVUSSH_LANG=en
+```
+
+Sem o argumento, `make install-user` volta a seguir o sistema. Um idioma que o
+aplicativo não fala é recusado com a lista dos que ele fala.
 
 ### Testando sem arriscar o seu arquivo
 

@@ -8,6 +8,8 @@ about that fails loudly at runtime, so it is pinned here.
 from __future__ import annotations
 
 import configparser
+import shutil
+import subprocess
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -179,3 +181,62 @@ def test_the_icons_are_licensed(path: Path) -> None:
 def test_the_icon_preview_is_present() -> None:
     """docs/ICONS.md embeds it; a missing file leaves a broken image."""
     assert (ROOT / "docs" / "icon-preview.png").is_file()
+
+
+# -- installing the launcher -----------------------------------------------
+
+
+def install_user(target: Path, **variables: str) -> subprocess.CompletedProcess[str]:
+    """Run `make install-user` into a throwaway data directory."""
+    if not (ROOT / ".venv" / "bin" / "python").exists():
+        pytest.skip("no .venv; run make setup")
+    if shutil.which("make") is None:
+        pytest.skip("make is not installed")
+    command = ["make", "install-user", f"DATA_HOME={target}"]
+    command += [f"{name}={value}" for name, value in variables.items()]
+    return subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
+
+
+def exec_line(target: Path) -> str:
+    installed = target / "applications" / f"{APP_ID}.desktop"
+    return next(
+        line
+        for line in installed.read_text(encoding="utf-8").splitlines()
+        if line.startswith("Exec=")
+    )
+
+
+def test_installing_points_the_launcher_at_this_checkout(tmp_path: Path) -> None:
+    """The shipped Exec= is just `parvussh`, which is not on PATH from a clone."""
+    assert install_user(tmp_path).returncode == 0
+
+    assert exec_line(tmp_path).endswith("/.venv/bin/python -m parvussh")
+
+
+def test_installing_without_a_language_follows_the_system(tmp_path: Path) -> None:
+    """The default, and the reason the variable is not called LANG.
+
+    `make` imports the environment and LANG is always set, so naming it that
+    would bake the shell's locale into the launcher and quietly defeat this.
+    """
+    assert install_user(tmp_path).returncode == 0
+
+    assert "PARVUSSH_LANG" not in exec_line(tmp_path)
+
+
+def test_a_language_can_be_pinned_into_the_launcher(tmp_path: Path) -> None:
+    result = install_user(tmp_path, PARVUSSH_LANG="en")
+
+    assert result.returncode == 0
+    assert exec_line(tmp_path).startswith("Exec=env PARVUSSH_LANG=en ")
+    assert "pinned" in result.stdout
+
+
+def test_a_language_we_do_not_ship_is_refused(tmp_path: Path) -> None:
+    """Better than installing a launcher that silently falls back."""
+    result = install_user(tmp_path, PARVUSSH_LANG="klingon")
+
+    assert result.returncode != 0
+    assert "not a language this app ships" in result.stdout
+    assert "en pt_br" in result.stdout
+    assert not (tmp_path / "applications").exists()  # nothing was written

@@ -5,6 +5,13 @@ format. Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Added
+
+- `make install-user PARVUSSH_LANG=en` pins the interface language into the
+  launcher, for reading the app in one language without changing the whole
+  system. Without the argument it follows the system locale, as before. A
+  language that is not shipped is refused, listing the ones that are.
+
 ## [0.1.0] — 2026-07-28
 
 First version. Reads and writes the real `~/.ssh/config`.

@@ -614,6 +614,32 @@ It uses librsvg through PyGObject rather than `rsvg-convert`, so it needs no
 package that is not already installed — `Gdk.Texture.new_from_filename` and
 `GdkPixbuf` both refuse SVG here, which is worth remembering.
 
+### Pinning the interface language into the launcher
+
+Asked for after the owner found there was no way to switch language from the
+app. There still is not one, deliberately — GNOME applications follow the
+system locale and the HIG has no pattern for a per-app language menu, so adding
+one would make ParvuSsh the odd application out (D4). What was missing was a
+way to *install* the launcher with a language fixed.
+
+```bash
+make install-user PARVUSSH_LANG=en
+```
+
+**The variable is not called `LANG`, and that matters.** `make` imports the
+environment, and `LANG` is always set — `pt_BR.UTF-8` on this machine. Naming it
+`LANG` would mean a plain `make install-user` silently baked the shell's locale
+into `Exec=`, defeating the "follow the system" default with no symptom at all.
+Verified before writing a line: `make` does see `LANG` from the environment.
+
+`check-lang` refuses a language the app does not ship rather than installing a
+launcher that quietly falls back, and prints the ones it does. `env VAR=x cmd`
+in an `Exec=` line is valid freedesktop — `desktop-file-validate` agrees.
+
+Four integration tests run `make install-user` into a `tmp_path` and read the
+`Exec=` line back. Mutation: renaming the variable to `LANG` fails three of
+them, which is exactly the trap they exist for.
+
 ### Known deviation: two files are over the size guideline
 
 `CLAUDE.md` §3 says a file past ~250 lines is usually two ideas sharing a name.

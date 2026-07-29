@@ -5,11 +5,29 @@ BIN    := $(VENV)/bin
 APP_ID    := io.github.wagnerbugs.ParvuSsh
 DATA_HOME ?= $(HOME)/.local/share
 
+# Optionally pin the interface language into the launcher:
+#
+#     make install-user PARVUSSH_LANG=en
+#
+# Left unset — the default — the app follows the system locale, which is what
+# GNOME applications do and why there is no language menu inside the app.
+#
+# Named after the runtime variable rather than something like LANG: make
+# imports the environment, and LANG is always set, so `make install-user`
+# would silently bake in whatever the shell happened to be using.
+PARVUSSH_LANG ?=
+
+ifeq ($(strip $(PARVUSSH_LANG)),)
+LAUNCH_COMMAND := $(CURDIR)/$(BIN)/python -m parvussh
+else
+LAUNCH_COMMAND := env PARVUSSH_LANG=$(strip $(PARVUSSH_LANG)) $(CURDIR)/$(BIN)/python -m parvussh
+endif
+
 APT_PACKAGES := python3-gi python3-gi-cairo gir1.2-gtk-4.0 gir1.2-adw-1 \
                 openssh-client xvfb
 
 .PHONY: setup test test-gui lint format run check clean \
-        install-user uninstall-user screenshots icon-preview
+        install-user uninstall-user check-lang screenshots icon-preview
 
 setup:
 	sudo apt install -y $(APT_PACKAGES)
@@ -53,7 +71,7 @@ clean:
 
 # Put the launcher and the icons where GNOME looks, for this user only.
 # No sudo: nothing outside $(HOME) is touched.
-install-user:
+install-user: check-lang
 	install -Dm644 data/$(APP_ID).desktop \
 		$(DATA_HOME)/applications/$(APP_ID).desktop
 	install -Dm644 data/icons/hicolor/scalable/apps/$(APP_ID).svg \
@@ -63,11 +81,27 @@ install-user:
 	install -Dm644 data/$(APP_ID).metainfo.xml \
 		$(DATA_HOME)/metainfo/$(APP_ID).metainfo.xml
 	# The .desktop Exec= is just `parvussh`, so point it at this checkout.
-	sed -i 's|^Exec=.*|Exec=$(CURDIR)/$(BIN)/python -m parvussh|' \
+	sed -i 's|^Exec=.*|Exec=$(LAUNCH_COMMAND)|' \
 		$(DATA_HOME)/applications/$(APP_ID).desktop
 	-update-desktop-database $(DATA_HOME)/applications 2>/dev/null
 	-gtk4-update-icon-cache -qtf $(DATA_HOME)/icons/hicolor 2>/dev/null
 	@echo "Installed. Look for ParvuSsh in the app grid."
+	@if [ -n "$(strip $(PARVUSSH_LANG))" ]; then \
+		echo "The launcher is pinned to PARVUSSH_LANG=$(strip $(PARVUSSH_LANG))."; \
+		echo "Run 'make install-user' with no arguments to follow the system again."; \
+	fi
+
+# Refuse a language we do not ship, rather than installing a launcher that
+# silently falls back to the default.
+check-lang:
+	@if [ -n "$(strip $(PARVUSSH_LANG))" ] && \
+	   ! $(BIN)/python -c "import sys; from parvussh.i18n import available_locales; \
+	     sys.exit(0 if '$(strip $(PARVUSSH_LANG))' in available_locales() else 1)"; then \
+		echo "PARVUSSH_LANG=$(strip $(PARVUSSH_LANG)) is not a language this app ships."; \
+		echo -n "Available: "; \
+		$(BIN)/python -c "from parvussh.i18n import available_locales; print(*available_locales())"; \
+		exit 1; \
+	fi
 
 uninstall-user:
 	rm -f $(DATA_HOME)/applications/$(APP_ID).desktop
