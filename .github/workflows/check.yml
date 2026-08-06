@@ -1,0 +1,117 @@
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A second push to the same branch makes the first run irrelevant.
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    # ruff reads target-version from pyproject.toml, so the verdict does not
+    # depend on the interpreter running it. Once is enough.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Install into the venv the Makefile expects
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -e '.[dev]'
+      - run: make lint
+
+  core:
+    # core/, data/ and i18n/ never import gi — tests/test_no_gtk.py enforces it,
+    # and the gui fixture reaches PyGObject through importorskip. That is what
+    # makes this job possible: setup-python cannot see the distro's PyGObject,
+    # so this is the only place the declared Python floor can be exercised at
+    # all. Installing GTK here would buy nothing and hide the guarantee.
+    name: core (python ${{ matrix.python }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor from pyproject.toml's requires-python, the version the app
+        # is developed on, and everything in between.
+        python: ["3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      # Deliberately a real .venv at the default path rather than
+      # `make test VENV=…`: a command-line override travels through MAKEFLAGS
+      # into the nested `make install-user` that tests/test_packaging.py runs,
+      # and the launcher it asserts on comes out pointing at the wrong tree.
+      - name: Install into the venv the Makefile expects
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -e '.[dev]'
+
+      - name: Prove PyGObject really is absent
+        run: |
+          if .venv/bin/python -c "import gi" 2>/dev/null; then
+            echo "PyGObject is importable here, so this job no longer proves"
+            echo "that core/, data/ and i18n/ stay free of GTK."
+            exit 1
+          fi
+          echo "No PyGObject on this interpreter, as intended."
+
+      - run: make test
+
+  gui:
+    # The other half: the distro's python3 with the distro's PyGObject, which
+    # is how the app is actually run and the only way to reach the GTK stack.
+    name: gui (${{ matrix.runner }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # 24.04 carries the oldest GTK/libadwaita pair we can still get from a
+        # supported image; ubuntu-latest tracks whatever GNOME ships next. They
+        # may name the same image today — the point is that they drift apart.
+        runner: [ubuntu-24.04, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      # `make setup` deliberately installs no system packages and calls no
+      # sudo, so the runner has to bring the stack itself. These are the same
+      # apt names tools/check_stack.py prints to a human on this family.
+      - name: Install the system stack
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-gi python3-gi-cairo gir1.2-gtk-4.0 \
+                                  gir1.2-adw-1 openssh-client python3-venv xvfb
+
+      # This runs tools/check_stack.py, which fails the job when GTK or
+      # libadwaita is below the declared floor and prints the versions found
+      # either way. Keeping that claim honest as the images move is half the
+      # reason this job exists.
+      - name: Create the venv, asserting the declared floor on the way
+        run: make setup
+
+      # The gui fixture skips — it does not fail — when the display is
+      # missing, which is right locally and dangerous here: a broken runner
+      # would report a green job that ran nothing. check_stack.py closed the
+      # typelib half of that; this closes the other half.
+      - name: Refuse to let the gui suite skip itself
+        run: |
+          command -v xvfb-run >/dev/null || {
+            echo "xvfb-run is missing; the gui suite would skip itself."
+            exit 1
+          }
+
+      - run: make test-gui
