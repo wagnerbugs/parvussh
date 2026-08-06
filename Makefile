@@ -23,14 +23,18 @@ else
 LAUNCH_COMMAND := env PARVUSSH_LANG=$(strip $(PARVUSSH_LANG)) $(CURDIR)/$(BIN)/python -m parvussh
 endif
 
-APT_PACKAGES := python3-gi python3-gi-cairo gir1.2-gtk-4.0 gir1.2-adw-1 \
-                openssh-client xvfb
-
 .PHONY: setup test test-gui lint format run check clean \
-        install-user uninstall-user check-lang screenshots icon-preview
+        install-user uninstall-user check-lang check-stack \
+        screenshots icon-preview
 
-setup:
-	sudo apt install -y $(APT_PACKAGES)
+# The system stack comes from the distribution, and the distribution decides
+# the package names. This prints the right command for whichever manager is
+# here rather than shelling out to one of them: assuming apt is what used to
+# make `make setup` fail on the first line everywhere else.
+check-stack:
+	@$(PYTHON) tools/check_stack.py
+
+setup: check-stack
 	$(PYTHON) -m venv --system-site-packages $(VENV)
 	$(BIN)/pip install --upgrade pip
 	$(BIN)/pip install -e '.[dev]'

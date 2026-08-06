@@ -87,8 +87,22 @@ próximo Salvar.
 
 ## Instalação
 
-Ubuntu 26.04 ou equivalente, GNOME 50. Mínimo: Python 3.11, GTK 4.12,
-libadwaita 1.5.
+Mínimo: Python 3.11, GTK 4.12, libadwaita 1.5. Desenvolvido no Ubuntu 26.04
+com GNOME 50, mas nada aqui é específico do Ubuntu.
+
+Esse mínimo de GTK é o filtro que importa, e ele exclui distribuições
+estáveis: um Debian 12 ou um Linux Mint 21 têm GTK anterior a 4.12 e o
+aplicativo não abre. Para saber onde a sua máquina está antes de clonar:
+
+```bash
+python3 tools/check_stack.py
+```
+
+Ele informa as versões encontradas e, se faltar alguma coisa, imprime o comando
+de instalação do gerenciador de pacotes que você usa — `apt`, `pacman` ou
+`dnf`. Nenhum comando é executado por ele; a linha é sua para conferir e rodar.
+
+Depois disso:
 
 ```bash
 git clone https://github.com/wagnerbugs/parvussh.git
@@ -96,9 +110,11 @@ cd parvussh
 make setup
 ```
 
-O `make setup` instala as dependências do sistema e cria o `.venv`. Não há
-dependências de runtime no PyPI: o PyGObject vem da distribuição de propósito,
-porque é o caminho que funciona sem dor de compilação.
+O `make setup` verifica o sistema e cria o `.venv`. Ele **não** instala pacotes
+do sistema nem chama `sudo`: essa parte é da sua distribuição, e o comando sai
+do `check_stack.py` acima. Não há dependências de runtime no PyPI — o PyGObject
+vem da distribuição de propósito, porque é o caminho que funciona sem dor de
+compilação.
 
 Para abrir pelo menu do GNOME, em vez de pelo terminal:
 

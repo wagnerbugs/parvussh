@@ -7,10 +7,22 @@ format. Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- `tools/check_stack.py` reports whether a machine can run ParvuSsh, and prints
+  the install command for the package manager it finds — `apt`, `pacman` or
+  `dnf` — when something is missing. It never runs a command itself. A GTK or
+  libadwaita older than the stated minimum is now a sentence that says so
+  instead of a traceback.
 - `make install-user PARVUSSH_LANG=en` pins the interface language into the
   launcher, for reading the app in one language without changing the whole
   system. Without the argument it follows the system locale, as before. A
   language that is not shipped is refused, listing the ones that are.
+
+### Changed
+
+- `make setup` no longer installs system packages and no longer calls `sudo`.
+  It assumed `apt`, which made it fail on the first line on any distribution
+  that does not have it. It now checks the machine and creates the venv; the
+  system stack is installed with the command `tools/check_stack.py` prints.
 
 ## [0.1.0] — 2026-07-28
 
