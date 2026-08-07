@@ -660,3 +660,96 @@ Recording this rather than quietly amending the rule to fit the code. If either
 file grows again during M14, split it then — the likeliest seam in `window.py`
 is the group of connection commands (`new`, `duplicate`, `delete`), and in
 `editor.py` the "form to config" pair (`apply` and `config_text`).
+
+---
+
+## 2026-08-06 — Session 3: a command line, and what to do next
+
+### M16 — `parvussh --list`
+
+Asked for by the owner, and not from the feature-request direction: he tried
+`python -m parvussh --list` on a hunch, found nothing there, and the ask came
+out of a real habit. With five servers and two more arriving, the question he
+asks most often is which alias he used, and opening a window to read five lines
+is the slow way to answer it.
+
+Checked against the non-goals list first, which is what that list is for. It is
+on none of them: the format is still `ssh_config`, nothing is abstracted away,
+and the flag prints the same two columns the sidebar shows.
+
+**The architecture paid out.** `parvussh/cli.py` took about half an hour,
+entirely because `core` has never imported `gi`. The rule written at M1 for a
+hypothetical future CLI turned out to have been written for this one.
+
+Argument handling moved out of `ui/app.py` so GTK stays behind a lazy import
+inside `open_window()`. Unrecognised arguments are forwarded rather than
+refused: `--display` and friends used to reach GTK when `sys.argv` went to it
+whole, and quietly breaking that would be a regression nobody would report.
+
+The listing only reads. `ConfigSet.load` calls `ensure_exists`, which creates
+`~/.ssh/config` on first run — right for the app, wrong for a read — so a
+missing config is answered with an invitation and nothing is written.
+
+### The mutation that hung instead of failing
+
+Standard practice at a gate here: break it on purpose and watch a test catch
+it. Made the GTK import eager, expecting a failure. **The suite hung instead.**
+
+`test_no_arguments_opens_the_window` was stubbing `sys.modules["parvussh.ui.
+app"]`, which only works while the import is lazy. With it eager, the name was
+already bound, the stub arrived too late, and the test opened a real
+`Adw.Application` and waited forever.
+
+A suite that hangs is worse than one that fails: it gives no name, no line, and
+on CI it burns the job's whole timeout. The fix was to give the handover a seam
+of its own — `open_window()` — which a test replaces wholesale, independent of
+how the import inside it is written. Then two guards, because this is the
+promise the whole module exists to keep:
+
+- `tests/test_cli.py` asks a **fresh interpreter** whether `gi` landed in
+  `sys.modules` after importing `parvussh.cli`. Catches it however it happens.
+- `tests/test_no_gtk.py` parses the AST for a module-level `parvussh.ui`
+  import. Catches it *by line number*, which is the difference between a test
+  that reports and a test that accuses.
+
+Repeated the mutation: both fail, in half a second, with the file named.
+
+### Two real addresses, found on the way out
+
+Scanning the history before the repository goes public turned up a live VPS
+address with the account name on it, sitting in `tests/test_tester.py` inside
+captured ssh output, and a real LAN host in a README example written earlier
+the same day. Replaced with RFC 5737 documentation addresses.
+
+Worth stating as a rule rather than an incident: **a test fixture is a public
+document.** Output captured from a real run is the most useful kind of fixture
+and the easiest one to leak through. The history still carries both; step 1 of
+the agreed order decides what to do about that.
+
+### The CI failure, diagnosed but not fixed
+
+Red since the workflow landed, and the owner asked for it recorded rather than
+repaired today. All 194 gui tests pass on the runner — what fails is the `gtk`
+fixture's teardown, which treats any GTK warning as a failure, and a CI
+container has no accessibility bus. Details and the one-line remedy are in the
+pending note under M15.
+
+The irony is worth keeping: that fixture was added in Session 2 and called the
+most valuable thing that session produced. It still is. It is also strict
+enough to fail on an environment's noise, and strictness has a maintenance
+cost that shows up somewhere other than where it was paid.
+
+### Where the project is going
+
+The owner asked for an honest assessment, and then answered it better himself:
+he wants this to help one person besides him. Two things came out of that
+conversation that belong here.
+
+The teaching angle is real, and there is now evidence for it: he learned
+`ServerAliveInterval` **from using the app**, because the form shows the true
+OpenSSH option name with a gloss beside it rather than a "keep alive" toggle.
+That is `CLAUDE.md` §1 working exactly as written, and it is the argument for
+the project that no feature list makes.
+
+The binding constraint is reach, not quality. Hence the agreed order at the top
+of `BUILD_PLAN.md` and M17. **Next session starts at step 1.**
