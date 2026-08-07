@@ -125,6 +125,45 @@ make install-user
 Instala o `.desktop` e os ícones em `~/.local/share`. Sem `sudo`, nada fora da
 sua pasta pessoal é tocado. Para desfazer: `make uninstall-user`.
 
+### Chamando pelo nome, de qualquer pasta
+
+Depois do `make setup`, digitar `parvussh` no terminal ainda responde
+`comando não encontrado`. Não é erro seu: o comando existe, mas dentro do
+ambiente virtual do projeto, em `.venv/bin/parvussh`, e essa pasta não está no
+seu `PATH`. Três saídas, da mais imediata à definitiva.
+
+**Caminho completo.** Funciona já, de dentro da pasta do projeto:
+
+```bash
+.venv/bin/parvussh --list
+```
+
+**Ativar o venv.** Enquanto aquele terminal estiver ativado, o nome existe:
+
+```bash
+source .venv/bin/activate
+parvussh --list
+deactivate
+```
+
+**Um link em `~/.local/bin`** — a recomendada, e a única que vale para sempre:
+
+```bash
+ln -s ~/projects/parvussh/.venv/bin/parvussh ~/.local/bin/parvussh
+```
+
+Troque o caminho pelo lugar onde você clonou. `~/.local/bin` já está no `PATH`
+na maioria das distribuições; se não estiver, o seu shell dirá o mesmo
+`comando não encontrado` e a correção é acrescentar a pasta no `~/.bashrc`.
+
+Melhor que um `alias` por dois motivos: um alias só vale no terminal
+interativo que o definiu, e portanto não funciona em script, `cron` ou
+`xargs`; e o link acompanha o clone, então um `git pull` atualiza o comando
+junto. O script tem o interpretador do venv escrito nele por caminho absoluto,
+então o link encontra tudo sozinho, de qualquer pasta, sem ativar nada.
+
+Para desfazer: `rm ~/.local/bin/parvussh`.
+
 ---
 
 ## Uso
@@ -138,6 +177,32 @@ make run
 | `Ctrl+N` | nova conexão |
 | `Ctrl+S` | salvar |
 | `F1` | ajuda |
+
+### Listando do terminal
+
+Quando a dúvida é só "qual apelido eu usei mesmo?", não precisa abrir a janela:
+
+```bash
+parvussh --list
+```
+
+(chamar pelo nome curto supõe o link de
+[Chamando pelo nome](#chamando-pelo-nome-de-qualquer-pasta); sem ele, use
+`.venv/bin/parvussh --list`)
+
+```
+hostinger  deploy@198.51.100.10:65002
+gps        root@203.0.113.24
+home       dev@192.168.1.20
+```
+
+Uma linha por conexão, alinhada para bater o olho. Um bloco sem `HostName`
+aparece dito com todas as letras, e um bloco curinga como `Host *` é marcado
+como padrão, não como conexão incompleta. Se algum `Include` trouxe outros
+arquivos, uma terceira coluna diz de qual arquivo veio cada bloco.
+
+O comando só lê: não cria o `~/.ssh/config` se ele ainda não existir, e não
+carrega nada de GTK — funciona por ssh, numa máquina sem ambiente gráfico.
 
 ### Idioma
 
