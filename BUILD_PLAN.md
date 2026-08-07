@@ -538,6 +538,31 @@ sending changes.
 
 **Gate:** CI green on a pull request.
 
+### Pending — the `gui` job has been red since the workflow landed
+
+Recorded 2026-08-06. `lint` and all four `core` jobs pass; both `gui` jobs
+fail, on `ubuntu-24.04` and on `ubuntu-latest`.
+
+**It is not the tests.** All 194 gui tests pass on the runner. What fails is
+the `gtk` fixture's teardown assertion in `tests/conftest.py`: it treats any
+GTK warning as a failure, and the runner emits one that a laptop never does —
+
+```
+Gtk-WARNING: Unable to acquire the address of the accessibility bus:
+org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not
+provided by any .service files. If you are attempting to run GTK without
+a11y support, GTK_A11Y should be set to 'none'.
+```
+
+There is no accessibility bus on a CI container, and the warning names its own
+remedy. The fix is almost certainly one line — `GTK_A11Y: none` in the `gui`
+job's `env:` — and it belongs in the workflow rather than in the fixture: the
+warning is an artefact of the environment, and softening the fixture would
+give up a check that has value on a real desktop.
+
+Do not tick M15 until this is green. A red check nobody attends to stops being
+read, and then the next failure is invisible.
+
 Whoever picks this up: everything it needs already exists. `make check` is the
 whole pipeline, `make test-gui` falls back gracefully when `xvfb-run` is
 missing, and `tests/conftest.py` skips the gui suite cleanly when the typelibs
