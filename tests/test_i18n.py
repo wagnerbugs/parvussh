@@ -18,7 +18,10 @@ from parvussh.i18n import (
     t,
 )
 
-UI_ROOT = Path(parvussh.__file__).parent / "ui"
+PACKAGE_ROOT = Path(parvussh.__file__).parent
+UI_ROOT = PACKAGE_ROOT / "ui"
+#: `cli.py` shows text too — the terminal is an interface like any other.
+ASKS_FOR_STRINGS = [*sorted(UI_ROOT.rglob("*.py")), PACKAGE_ROOT / "cli.py"]
 # t("some.key"), t('some.key', ...) — the keys the UI actually asks for.
 CALL = re.compile(r"""\bt\(\s*["']([a-zA-Z0-9_.]+)["']""")
 
@@ -203,7 +206,7 @@ def test_no_key_is_defined_twice_with_different_text() -> None:
 def test_every_key_the_ui_asks_for_exists() -> None:
     """Fails the moment a widget references a string nobody translated."""
     missing: list[str] = []
-    for path in sorted(UI_ROOT.rglob("*.py")):
+    for path in ASKS_FOR_STRINGS:
         for key in CALL.findall(path.read_text(encoding="utf-8")):
             if not has(key):
                 missing.append(f"{path.name}: {key}")

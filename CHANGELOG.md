@@ -7,6 +7,10 @@ format. Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- `parvussh --list` prints one line per connection — alias and
+  `user@host:port` — and exits, for recalling an alias without opening the
+  window. It imports no GTK, so it also works over ssh on a machine with no
+  graphical stack, and it never creates or writes anything.
 - `tools/check_stack.py` reports whether a machine can run ParvuSsh, and prints
   the install command for the package manager it finds — `apt`, `pacman` or
   `dnf` — when something is missing. It never runs a command itself. A GTK or

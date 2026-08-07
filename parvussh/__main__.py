@@ -2,6 +2,6 @@
 
 from __future__ import annotations
 
-from parvussh.ui.app import main
+from parvussh.cli import main
 
 raise SystemExit(main())

@@ -549,6 +549,38 @@ ci: run lint, unit tests and gui smoke tests on every push
 
 ---
 
+## M16 — `parvussh --list`
+
+**Asked for by the owner on 2026-08-06.** Not in the original plan; checked
+against the non-goals list first, and it is on none of them — the format is
+still `ssh_config`, nothing is abstracted away, and the flag prints the same
+two columns the sidebar shows. The reason it earns its place: as the number of
+servers grows, the thing you need most often is to remember the alias, and
+opening a window to read five lines is the slow way to do it.
+
+- [x] `parvussh/cli.py` — `argparse`, `--list`/`-l`, `--version`; unrecognised
+  arguments are forwarded to GTK, which used to receive `sys.argv` whole
+- [x] GTK imported lazily, inside `main`, so the listing runs on a machine with
+  no graphical stack. `tests/test_no_gtk.py` forbids the import statically;
+  `tests/test_cli.py` proves it in a fresh interpreter via `sys.modules`
+- [x] Console script moved to `parvussh.cli:main`; `__main__.py` follows
+- [x] `ui/app.py:main` takes an optional `argv`
+- [x] `cli.*` keys in both catalogs; the terminal is an interface like any
+  other, so no sentence lives in `cli.py` (CLAUDE.md §2)
+- [x] A source column, shown only when `Include` brought in more than one file
+- [x] `tests/test_cli.py` — columns, wildcard wording, `Match` excluded, the
+  empty and missing-config invitations, the unreadable-file error, argument
+  forwarding, and that a read never creates the config
+- [x] `tests/test_i18n.py` scans `cli.py` for `t("…")` keys too
+
+**Gate:** `make check` green, and `parvussh --list` prints the real config.
+
+```
+feat(cli): list the configured connections without opening the window
+```
+
+---
+
 ## After v0.1.0 — candidates, not commitments
 
 Each of these must be checked against the non-goals list before starting.

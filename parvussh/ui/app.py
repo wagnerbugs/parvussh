@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Sequence
 from pathlib import Path
 
 import gi
@@ -68,8 +69,9 @@ class ParvuSshApp(Adw.Application):
         ).present(self.props.active_window)
 
 
-def main() -> int:
-    return ParvuSshApp().run(sys.argv)
+def main(argv: Sequence[str] | None = None) -> int:
+    """Run the application. `parvussh.cli` passes what it did not consume."""
+    return ParvuSshApp().run(list(sys.argv if argv is None else argv))
 
 
 if __name__ == "__main__":

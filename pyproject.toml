@@ -32,7 +32,7 @@ Homepage = "https://github.com/wagnerbugs/parvussh"
 Source = "https://github.com/wagnerbugs/parvussh"
 
 [project.scripts]
-parvussh = "parvussh.ui.app:main"
+parvussh = "parvussh.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["parvussh*"]

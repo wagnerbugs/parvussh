@@ -1,4 +1,4 @@
-"""Window, sidebar, editor and dialog copy (pt-BR).
+"""Window, sidebar, editor, dialog and command line copy (pt-BR).
 
 House style, from CLAUDE.md §7:
 
@@ -19,6 +19,22 @@ STRINGS: dict[str, str] = {
     "app.name": "ParvuSsh",
     "app.comments": "Gerencia o ~/.ssh/config sem esconder o ~/.ssh/config.",
     "app.developer": "wagnerbugs",
+    # -- command line -----------------------------------------------------
+    "cli.description": (
+        "Gerencia as conexões do ~/.ssh/config. Sem argumentos, abre a janela."
+    ),
+    "cli.list_help": "lista as conexões do ~/.ssh/config e sai",
+    "cli.no_hostname": "sem HostName",
+    "cli.wildcard": "padrão curinga",
+    "cli.no_config": (
+        "Ainda não existe {path}. Abra o ParvuSsh para cadastrar a primeira conexão."
+    ),
+    "cli.empty": (
+        "Nenhuma conexão em {path}. Abra o ParvuSsh para cadastrar a primeira."
+    ),
+    "cli.error.load": (
+        "Não foi possível ler {path}: {detail}. Confira as permissões do arquivo."
+    ),
     # -- menus ------------------------------------------------------------
     "menu.help": "Ajuda e dicas",
     "menu.reload": "Recarregar do disco",

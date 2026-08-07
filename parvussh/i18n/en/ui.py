@@ -1,4 +1,4 @@
-"""Window, sidebar, editor and dialog copy (English).
+"""Window, sidebar, editor, dialog and command line copy (English).
 
 Same house style as the pt-BR catalog, from CLAUDE.md §7:
 
@@ -19,6 +19,20 @@ STRINGS: dict[str, str] = {
     "app.name": "ParvuSsh",
     "app.comments": "Manages ~/.ssh/config without hiding ~/.ssh/config.",
     "app.developer": "wagnerbugs",
+    # -- command line -----------------------------------------------------
+    "cli.description": (
+        "Manages the connections in ~/.ssh/config. With no arguments, opens the window."
+    ),
+    "cli.list_help": "list the connections in ~/.ssh/config and exit",
+    "cli.no_hostname": "no HostName",
+    "cli.wildcard": "wildcard pattern",
+    "cli.no_config": (
+        "There is no {path} yet. Open ParvuSsh to add the first connection."
+    ),
+    "cli.empty": "No connections in {path}. Open ParvuSsh to add the first one.",
+    "cli.error.load": (
+        "{path} could not be read: {detail}. Check the file's permissions."
+    ),
     # -- menus ------------------------------------------------------------
     "menu.help": "Help and tips",
     "menu.reload": "Reload from disk",
