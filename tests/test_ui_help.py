@@ -8,6 +8,7 @@ import pytest
 
 from parvussh.data.guide import ABOUT_CONFIG, SECTIONS
 from parvussh.data.keywords import CATALOG
+from parvussh.i18n import available_locales, current_locale, set_locale
 
 pytestmark = pytest.mark.gui
 
@@ -71,19 +72,42 @@ def test_the_guide_names_the_commands_it_talks_about() -> None:
         assert command in body, command
 
 
+def guide_bodies() -> list[tuple[str, str, str]]:
+    """Every guide body in every shipped language, as `(locale, key, text)`.
+
+    The bodies resolve through `t()` at the active locale, so a check that
+    does not switch reads `pt_br` and nothing else — and the English guide is
+    the same amount of hand-written markup, with the same way of breaking.
+    """
+    original = current_locale()
+    collected: list[tuple[str, str, str]] = []
+    try:
+        for locale in available_locales():
+            set_locale(locale)
+            for section in (*SECTIONS, ABOUT_CONFIG):
+                collected.append((locale, section.key, section.body))
+    finally:
+        set_locale(original)
+    return collected
+
+
 def test_the_guide_markup_is_balanced() -> None:
     """An unclosed tag makes Pango render the raw markup at the user."""
-    for section in (*SECTIONS, ABOUT_CONFIG):
-        assert section.body.count("<tt>") == section.body.count("</tt>"), section.key
-        assert section.body.count("<b>") == section.body.count("</b>"), section.key
+    for locale, key, body in guide_bodies():
+        where = f"{locale}:{key}"
+        assert body.count("<tt>") == body.count("</tt>"), where
+        assert body.count("<b>") == body.count("</b>"), where
 
 
 def test_the_guide_renders_as_pango_markup(gtk) -> None:
-    from gi.repository import Pango
+    from gi.repository import GLib, Pango
 
-    for section in (*SECTIONS, ABOUT_CONFIG):
-        # Raises GLib.Error on malformed markup, which is the point.
-        Pango.parse_markup(section.body, -1, "\0")
+    for locale, key, body in guide_bodies():
+        try:
+            Pango.parse_markup(body, -1, "\0")
+        except GLib.Error as error:
+            # The exception alone does not say which section it came from.
+            pytest.fail(f"{locale}:{key} is not valid markup: {error}")
 
 
 def test_the_first_match_wins_rule_is_explained() -> None:

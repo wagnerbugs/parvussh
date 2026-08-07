@@ -39,6 +39,21 @@ format. Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   `EscapeChar` says `~.` ends a frozen session, and `Compression` says it hurts
   on a fast link. The `Port` example is `2222`, since the description now
   states that 22 is the default.
+- The key guide now says which machine each command runs on, keeps the account
+  password and the key's passphrase apart by name, and covers what a VPS
+  actually does to people: the files in `/etc/ssh/sshd_config.d/` that are read
+  before `sshd_config` and silently cancel a `PasswordAuthentication no`,
+  `sshd -t` before reloading, `sshd -T` to see what took effect, the provider's
+  panel console as the way back in, and `Too many authentication failures`
+  named where someone arrives holding it. Section 2 ends by asking you to
+  confirm the key works before section 4 closes the password door.
+
+### Fixed
+
+- The guide's markup was only ever checked in Portuguese: both tests read the
+  sections through the active locale, and the suite never left `pt_br`. They
+  now walk every shipped language, so an unclosed `<tt>` in the English guide
+  fails the suite instead of reaching a reader as raw markup.
 
 ## [0.1.0] — 2026-07-28
 
