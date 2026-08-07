@@ -170,6 +170,9 @@ def test_a_real_openssh_10_refusal_still_reads_as_reachable() -> None:
     Three lines of banner, then the line that matters. Reaching the
     authentication prompt is the success we care about, and the noise in front
     of it must not change that.
+
+    The address is the only edit: a real one from the capture, swapped for a
+    documentation address (RFC 5737). A test fixture is a public document.
     """
     real = (
         f"{POST_QUANTUM_WARNING}\n"
