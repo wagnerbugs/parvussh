@@ -27,6 +27,18 @@ format. Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   It assumed `apt`, which made it fail on the first line on any distribution
   that does not have it. It now checks the machine and creates the venv; the
   system stack is installed with the command `tools/check_stack.py` prints.
+- `PasswordAuthentication`, `KbdInteractiveAuthentication` and
+  `PubkeyAuthentication` described the server's behaviour, which is what those
+  same three options mean in `sshd_config`. Nothing ParvuSsh writes reaches the
+  server, so the descriptions now say what the client does — turning
+  `PasswordAuthentication` off makes the connection fail rather than closing
+  password login on the server.
+- Option descriptions across the catalog now say the default where one exists,
+  and name what the option costs instead of warning to use it with care:
+  `ForwardAgent` says root on the far end can use the forwarded keys,
+  `EscapeChar` says `~.` ends a frozen session, and `Compression` says it hurts
+  on a fast link. The `Port` example is `2222`, since the description now
+  states that 22 is the default.
 
 ## [0.1.0] — 2026-07-28
 
