@@ -38,7 +38,9 @@ def run_test(app, pump):
 # -- what gets sent to ssh -------------------------------------------------
 
 
-def test_the_test_uses_the_form_not_the_saved_file(app, pump, fake_bin) -> None:
+def test_the_test_uses_the_form_not_the_saved_file(
+    app, pump, fake_bin, fake_home
+) -> None:
     """Testing before saving is the entire point of the feature."""
     fake_bin.install("ssh", returncode=0)
     app.editor.hostname.set_text("198.51.100.7")
@@ -46,7 +48,11 @@ def test_the_test_uses_the_form_not_the_saved_file(app, pump, fake_bin) -> None:
     run_test(app, pump)
 
     config = Path(fake_bin.args("ssh")[1])
-    assert config.name.startswith("parvussh-")
+    # Not the saved config, and not the system temp directory either: D5 puts
+    # it in ~/.ssh, where a sandboxed build's host ssh can still read it.
+    assert config.name.startswith(".parvussh-")
+    assert config.parent == fake_home / ".ssh"
+    assert config != fake_home / ".ssh" / "config"
     # The temp file is deleted by then, so check what the form would produce.
     assert "HostName 198.51.100.7" in app.editor.config_text()
 

@@ -13,6 +13,8 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+from parvussh.core import host
+
 KEY_TYPES: tuple[str, ...] = ("ed25519", "ecdsa", "rsa")
 DEFAULT_KEY_TYPE = "ed25519"
 RSA_BITS = 4096
@@ -125,7 +127,7 @@ def describe(path: Path) -> SshKey:
     """Read a key's fingerprint and type. Degrades to the filename alone."""
     try:
         result = subprocess.run(
-            ["ssh-keygen", "-l", "-f", str(path)],
+            host.command(["ssh-keygen", "-l", "-f", str(path)]),
             capture_output=True,
             text=True,
             timeout=DESCRIBE_TIMEOUT,
@@ -153,13 +155,17 @@ def generate_command(
     passphrase: str = "",
     comment: str = "",
 ) -> list[str]:
-    """The exact argv we would run. Split out so a test can assert on it."""
-    command = ["ssh-keygen", "-t", kind, "-f", str(path), "-N", passphrase]
+    """The exact argv we would run. Split out so a test can assert on it.
+
+    Inside a Flatpak it arrives wrapped in `flatpak-spawn --host`, so the key
+    is made by the same `ssh-keygen` the user has in their terminal (D5).
+    """
+    argv = ["ssh-keygen", "-t", kind, "-f", str(path), "-N", passphrase]
     if kind == "rsa":
-        command += ["-b", str(RSA_BITS)]
+        argv += ["-b", str(RSA_BITS)]
     if comment:
-        command += ["-C", comment]
-    return command
+        argv += ["-C", comment]
+    return host.command(argv)
 
 
 def generate(

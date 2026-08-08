@@ -14,6 +14,8 @@ import tempfile
 import time
 from pathlib import Path
 
+from parvussh.core import host
+
 # A name that cannot resolve: we want ssh to parse the file, not connect.
 VALIDATION_HOST = "parvussh-validation.invalid"
 VALIDATION_TIMEOUT = 10
@@ -46,14 +48,10 @@ def validate(text: str) -> None:
     without openssh-client would trade a real capability for a check we cannot
     run, so validation is skipped instead.
     """
-    handle, tmp = tempfile.mkstemp(suffix=".sshconfig", prefix="parvussh-")
-    try:
-        with os.fdopen(handle, "w", encoding="utf-8", newline="") as stream:
-            stream.write(text)
-        os.chmod(tmp, CONFIG_MODE)
+    with host.temp_config(text) as tmp:
         try:
             result = subprocess.run(
-                ["ssh", "-F", tmp, "-G", VALIDATION_HOST],
+                host.command(["ssh", "-F", tmp, "-G", VALIDATION_HOST]),
                 capture_output=True,
                 text=True,
                 timeout=VALIDATION_TIMEOUT,
@@ -66,8 +64,6 @@ def validate(text: str) -> None:
             # ssh quotes the temp path back at us; the user knows it as
             # their config.
             raise ConfigError(message.replace(tmp, "config"))
-    finally:
-        os.unlink(tmp)
 
 
 def backup_path(path: Path) -> Path:

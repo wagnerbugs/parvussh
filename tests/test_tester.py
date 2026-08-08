@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import pytest
@@ -275,11 +274,21 @@ def test_run_deletes_the_temp_config_even_when_ssh_explodes(monkeypatch) -> None
     assert seen and not Path(seen[0]).exists()
 
 
-def test_the_temp_config_is_private_while_it_exists(fake_bin: FakeBin) -> None:
+def test_the_temp_config_is_somewhere_the_host_can_read(
+    fake_bin: FakeBin, fake_home: Path
+) -> None:
+    """D5: the system temp directory is private to a Flatpak sandbox.
+
+    A config written there is invisible to the host `ssh` we hand the path to,
+    so it goes in `~/.ssh` — dot-prefixed, because a glob does not match a
+    dotfile and the user may well have an `Include *`.
+    """
     fake_bin.install("ssh", returncode=0, stdout="%F")
 
     result = run("vps", CONFIG_TEXT)
 
-    # The shim echoed its own -F path; assert we passed a real temp file.
-    assert result.output.endswith(".sshconfig")
-    assert os.path.basename(result.output).startswith("parvussh-")
+    # The shim echoed its own -F path back at us.
+    passed = Path(result.output)
+    assert passed.suffix == ".sshconfig"
+    assert passed.name.startswith(".parvussh-")
+    assert passed.parent == fake_home / ".ssh"

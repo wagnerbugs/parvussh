@@ -691,17 +691,24 @@ license is declared, and the string `OWNER` appears nowhere.
 - [x] Decide question 2, write it up as **D5** before implementing it
 - [x] `appstreamcli validate` clean once the repository is public — done when
       the repository went public on 2026-08-08
-- [ ] **Move the validation and test temp files somewhere the host can see.**
-      `writer.validate()` and `tester.try_alias()` use `tempfile.mkstemp()`,
-      which lands in the sandbox's private `/tmp`. Do this before the manifest:
-      without it the app opens and fails on the first save. See D5.
-- [ ] One seam for reaching a host binary, used by `writer.py`, `tester.py` and
-      `keys.py`: plain `["ssh", …]` normally, `["flatpak-spawn", "--host",
-      "ssh", …]` inside a sandbox. `tester.interpret()` reads exit codes, and
-      `flatpak-spawn` has failure codes of its own — cover them with `fake_bin`
-- [ ] Verify the agent actually reaches the host `ssh`:
-      `flatpak-spawn --host ssh-add -l` from a built bundle. D5 leaves this
-      open on purpose rather than guessing
+- [x] **The temp files moved somewhere the host can see** —
+      `core/host.py:temp_config()` puts them in `~/.ssh`, dot-prefixed and
+      `0600`, instead of the sandbox's private `/tmp`
+- [x] **One seam for reaching a host binary** — `core/host.py:command()`,
+      used by `writer.validate()`, `tester.build_command()` and both callers
+      in `keys.py`. Plain argv outside a sandbox, `flatpak-spawn --host`
+      inside one. `tests/test_host.py` drives both sides with `fake_bin`
+- [ ] **Two measurements that need a real bundle, not a guess.** Both are
+      named in D5 and neither is implemented, on purpose:
+      1. Does the host `ssh` find the user's agent? `SSH_AUTH_SOCK` inside a
+         Flatpak points at a path that only exists inside. Measure with
+         `flatpak-spawn --host ssh-add -l`, then decide between
+         `--socket=ssh-auth`, an explicit `--env=`, or neither.
+      2. What does `flatpak-spawn` exit with when the host has no openssh?
+         Outside a sandbox that case is a `FileNotFoundError` every caller
+         already handles. Inside one it is an exit status, and
+         `tester.interpret()` would read it as ssh's own. Measure it, then map
+         it to `NO_SSH` with a `fake_bin` test for the code
 - [ ] `io.github.wagnerbugs.ParvuSsh.yaml` manifest against a current GNOME
       runtime; build locally with `flatpak-builder`
 - [ ] README: the Flatpak install section, with the `alias parvussh=…` line

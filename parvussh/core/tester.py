@@ -13,14 +13,13 @@ testing, and it should be testable without a subprocess.
 
 from __future__ import annotations
 
-import os
 import subprocess
-import tempfile
 from dataclasses import dataclass
+
+from parvussh.core import host
 
 TIMEOUT = 25
 CONNECT_TIMEOUT = 8
-CONFIG_MODE = 0o600
 
 # Status codes, not sentences. The UI turns each into t("test.<status>.title")
 # and t("test.<status>.detail") — core carries no translated text (D3).
@@ -84,31 +83,34 @@ def interpret(returncode: int, output: str) -> TestResult:
 
 
 def build_command(alias: str, config_path: str) -> list[str]:
-    """The argv we run. Split out so a test can assert on it."""
-    return [
-        "ssh",
-        "-F",
-        config_path,
-        "-o",
-        "BatchMode=yes",  # never prompt: a hung prompt is an invisible freeze
-        "-o",
-        f"ConnectTimeout={CONNECT_TIMEOUT}",
-        "-o",
-        "NumberOfPasswordPrompts=0",
-        "-o",
-        "StrictHostKeyChecking=accept-new",
-        alias,
-        "true",  # the cheapest possible remote command
-    ]
+    """The argv we run. Split out so a test can assert on it.
+
+    Inside a Flatpak this comes back wrapped in `flatpak-spawn --host`, so the
+    ssh that answers is the user's own — the one that can reach their agent and
+    run their `ProxyCommand` (D5).
+    """
+    return host.command(
+        [
+            "ssh",
+            "-F",
+            config_path,
+            "-o",
+            "BatchMode=yes",  # never prompt: a hung prompt is an invisible freeze
+            "-o",
+            f"ConnectTimeout={CONNECT_TIMEOUT}",
+            "-o",
+            "NumberOfPasswordPrompts=0",
+            "-o",
+            "StrictHostKeyChecking=accept-new",
+            alias,
+            "true",  # the cheapest possible remote command
+        ]
+    )
 
 
 def run(alias: str, config_text: str, timeout: int = TIMEOUT) -> TestResult:
     """Try `alias` against `config_text`, which need not be saved anywhere."""
-    handle, temp = tempfile.mkstemp(suffix=".sshconfig", prefix="parvussh-")
-    try:
-        with os.fdopen(handle, "w", encoding="utf-8", newline="") as stream:
-            stream.write(config_text)
-        os.chmod(temp, CONFIG_MODE)
+    with host.temp_config(config_text) as temp:
         try:
             result = subprocess.run(
                 build_command(alias, temp),
@@ -123,5 +125,3 @@ def run(alias: str, config_text: str, timeout: int = TIMEOUT) -> TestResult:
             return TestResult(TIMEOUT_STATUS)
         output = (result.stdout + result.stderr).strip()
         return interpret(result.returncode, output)
-    finally:
-        os.unlink(temp)

@@ -48,6 +48,14 @@ format. Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   named where someone arrives holding it. Section 2 ends by asking you to
   confirm the key works before section 4 closes the password door.
 
+- `parvussh/core/host.py` is the one place that knows whether the app is
+  running inside a sandbox. `writer.py`, `tester.py` and `keys.py` now ask it
+  for the argv to run and for a temp file the host can read, which is what a
+  Flatpak build will need (`docs/DECISIONS.md` D5). Outside a Flatpak nothing
+  changes except where the validation and connection-test temp files live:
+  `~/.ssh` instead of the system temp directory, still `0600`, and now
+  dot-prefixed so a stray `Include *` cannot pick one up.
+
 ### Fixed
 
 - The guide's markup was only ever checked in Portuguese: both tests read the
