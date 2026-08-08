@@ -603,10 +603,10 @@ Everything it needed already existed. `make check` is the whole pipeline,
 `tests/conftest.py` skips the gui suite cleanly when the typelibs are absent —
 so a runner without the gir packages reports skips, not failures.
 
-One warning left, and it is not ours: `actions/checkout@v4` and
-`actions/setup-python@v5` pin Node 20, which GitHub has deprecated and is
-already forcing onto Node 24. It annotates every run today and becomes a
-failure whenever they stop forcing it. Bumping both actions is the whole fix.
+The Node 20 deprecation warning both actions carried is gone as of 2026-08-08:
+`actions/checkout@v7` and `actions/setup-python@v7`, the current majors, both
+declare `node24`. The floating major tag is deliberate — it picks up patches
+without a commit here, and a major is where the breaking changes live.
 
 ```
 ci: run lint, unit tests and gui smoke tests on every push

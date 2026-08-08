@@ -20,8 +20,8 @@ jobs:
     # depend on the interpreter running it. Once is enough.
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.14"
       - name: Install into the venv the Makefile expects
@@ -46,8 +46,8 @@ jobs:
         # is developed on, and everything in between.
         python: ["3.11", "3.12", "3.13", "3.14"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
 
@@ -92,7 +92,7 @@ jobs:
         # may name the same image today — the point is that they drift apart.
         runner: [ubuntu-24.04, ubuntu-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # `make setup` deliberately installs no system packages and calls no
       # sudo, so the runner has to bring the stack itself. These are the same
