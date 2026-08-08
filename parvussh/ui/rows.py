@@ -130,7 +130,10 @@ class OptionRow:
         # Built by a constructor that takes no title, so no_markup is in time.
         row = no_markup(Adw.SpinRow.new_with_range(self.keyword.lo, self.keyword.hi, 1))
         row.set_title(self.keyword.name)
-        row.set_subtitle(self._hint())
+        # The description alone, not `_hint()`: the example is a number, and a
+        # spin row is already showing one. `ServerAliveInterval` read "ex.: 60"
+        # two centimetres from a selector displaying 60.
+        row.set_subtitle(self.keyword.description)
         row.set_value(int(value.strip()) if value.strip() else self.keyword.lo)
         row.connect("notify::value", self._changed)
         return row

@@ -72,6 +72,22 @@ def test_a_spinner_respects_the_catalog_bounds(rows, app) -> None:
     assert interval.row.get_adjustment().get_upper() == 86400
 
 
+def test_a_spinner_does_not_print_the_example_it_is_already_showing(app) -> None:
+    """A number in the subtitle beside a selector displaying one reads as noise."""
+    interval = option(app, "ServerAliveInterval")
+
+    assert interval.row.get_subtitle() == interval.keyword.description
+    assert interval.keyword.example  # the catalog has one; the row just skips it
+    assert interval.keyword.example not in interval.row.get_subtitle()
+
+
+def test_a_text_row_still_offers_the_example(app) -> None:
+    """The other half of the rule: nothing on screen shows it there."""
+    identity = option(app, "IdentityFile")
+
+    assert identity.keyword.example in identity.row.get_tooltip_text()
+
+
 def test_an_enum_becomes_a_dropdown(rows, app) -> None:
     from gi.repository import Adw
 

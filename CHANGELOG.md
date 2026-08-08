@@ -67,6 +67,11 @@ format. Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   10.4p1. Every permission in the manifest is argued in `docs/DECISIONS.md`
   D5, including the two that are deliberately absent.
 
+- A numeric row no longer prints the example the selector beside it is already
+  showing. `ServerAliveInterval` read "ex.: 60" two centimetres from a spinner
+  displaying 60. The example still appears where nothing on screen carries it:
+  the text rows and the help page.
+
 ### Fixed
 
 - The guide's markup was only ever checked in Portuguese: both tests read the
