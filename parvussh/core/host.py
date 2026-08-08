@@ -11,11 +11,15 @@ know which side of a sandbox it is on:
    the sandbox, so a config written there is invisible to the host `ssh` we
    hand the path to. `temp_config()` puts it where both sides can see it.
 
-Still open, and deliberately not guessed at: what `flatpak-spawn` exits with
-when the host has no openssh at all. Outside a sandbox that case arrives as
-`FileNotFoundError` and every caller already handles it; inside one it arrives
-as some exit status, and which one is a measurement to take against a real
-bundle rather than a constant to invent here. See M17's checklist.
+3. **A missing openssh stops looking like one.** Outside a sandbox it arrives
+   as `FileNotFoundError`; through the portal it arrives as an exit status,
+   and a status is what `interpret()` reads as ssh's own verdict.
+   `spawn_failed()` tells the two apart.
+
+Note for anyone reading D5 and expecting an empty sandbox: the GNOME runtime
+does ship `/usr/bin/ssh`. That makes the seam more necessary, not less — the
+app would otherwise find a plausible ssh, validate against a version the user
+does not run, and fail only on the options that need the host.
 """
 
 from __future__ import annotations
@@ -32,8 +36,12 @@ from pathlib import Path
 FLATPAK_INFO = Path("/.flatpak-info")
 
 #: What turns our argv into the host's. `--host` is the whole point: without
-#: it the command runs in the sandbox, where there is no openssh.
+#: it the command runs against the runtime's own copy of ssh, which is not the
+#: program the user runs in their terminal.
 SPAWN: tuple[str, ...] = ("flatpak-spawn", "--host")
+
+#: What `flatpak-spawn` exits with when it could not start the command at all.
+SPAWN_FAILED = 1
 
 CONFIG_MODE = 0o600
 SSH_DIR_MODE = 0o700
@@ -49,6 +57,24 @@ def command(argv: Sequence[str]) -> list[str]:
     if in_sandbox():
         return [*SPAWN, *argv]
     return list(argv)
+
+
+def spawn_failed(returncode: int) -> bool:
+    """Whether the portal refused, rather than the command having answered.
+
+    Measured on flatpak 1.16.6 against `org.gnome.Platform//50`: with no such
+    binary on the host, `flatpak-spawn` exits 1 and says `Portal call failed`
+    on stderr; otherwise it forwards the child's own status untouched — 42
+    comes back 42 and 255 comes back 255.
+
+    That leaves 1 to mean one thing, because the real `ssh` never returns it
+    in either shape we run. `ssh -F … -G host` exits 0 or 255 — a bad option,
+    a missing config file and a failed lookup are all 255 — and the
+    connection test runs `true` on the far side, which cannot exit 1 either.
+    Matching on the message instead would mean matching on a sentence the
+    portal translates.
+    """
+    return returncode == SPAWN_FAILED and in_sandbox()
 
 
 def shared_dir() -> Path:

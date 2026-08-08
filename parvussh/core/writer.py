@@ -59,6 +59,10 @@ def validate(text: str) -> None:
             )
         except (FileNotFoundError, subprocess.TimeoutExpired):
             return
+        if host.spawn_failed(result.returncode):
+            # The host has no openssh. Same as this machine not having it:
+            # a check we cannot run must never be what stops a save.
+            return
         if result.returncode != 0:
             message = (result.stderr or result.stdout).strip()
             # ssh quotes the temp path back at us; the user knows it as

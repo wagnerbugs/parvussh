@@ -123,5 +123,9 @@ def run(alias: str, config_text: str, timeout: int = TIMEOUT) -> TestResult:
             return TestResult(NO_SSH)
         except subprocess.TimeoutExpired:
             return TestResult(TIMEOUT_STATUS)
+        if host.spawn_failed(result.returncode):
+            # Reached the portal, found no ssh on the other side. The same
+            # answer as having no ssh here, which is what the user must read.
+            return TestResult(NO_SSH)
         output = (result.stdout + result.stderr).strip()
         return interpret(result.returncode, output)

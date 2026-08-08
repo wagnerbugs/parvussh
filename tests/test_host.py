@@ -173,6 +173,48 @@ def test_a_missing_flatpak_spawn_reads_as_no_ssh(
     assert tester.run("vps", "Host vps\n").status == tester.NO_SSH
 
 
+# -- the portal refusing, told apart from ssh answering ---------------------
+
+
+def test_a_refused_spawn_is_only_a_refusal_inside_a_sandbox(sandbox: Path) -> None:
+    assert host.spawn_failed(1) is True
+
+
+def test_the_same_code_from_a_real_ssh_is_left_alone() -> None:
+    """Outside a sandbox, 1 is whatever ssh meant by it and nothing else."""
+    assert host.spawn_failed(1) is False
+
+
+@pytest.mark.parametrize("returncode", [0, 2, 42, 255])
+def test_every_other_status_came_from_the_command(
+    sandbox: Path, returncode: int
+) -> None:
+    """`flatpak-spawn` forwards the child's status untouched; only 1 is its own."""
+    assert host.spawn_failed(returncode) is False
+
+
+def test_no_openssh_on_the_host_reads_as_no_ssh(
+    fake_bin: FakeBin, sandbox: Path
+) -> None:
+    fake_bin.install("flatpak-spawn", returncode=1, stderr="Portal call failed: …")
+
+    assert tester.run("vps", "Host vps\n").status == tester.NO_SSH
+
+
+def test_no_openssh_on_the_host_does_not_stop_a_save(
+    fake_bin: FakeBin, sandbox: Path
+) -> None:
+    """The rule that already held outside a sandbox has to hold inside one.
+
+    `validate()` skips rather than refuses when it cannot run ssh. Without
+    this the portal's own exit status would read as ssh rejecting the config,
+    and the user could never save anything.
+    """
+    fake_bin.install("flatpak-spawn", returncode=1, stderr="Portal call failed: …")
+
+    writer.validate("Host vps\n")  # returns, raises nothing
+
+
 def test_validate_still_forwards_what_the_host_ssh_refused(
     fake_bin: FakeBin, sandbox: Path
 ) -> None:

@@ -143,11 +143,19 @@ invite an action, tooltips on every icon-only button. **No custom stylesheet.**
 Debian stable and Mint users out, and a Flatpak carries its own runtime. It is
 a way to reach them, not a way to contain the app.
 
-There is no openssh inside the sandbox, and the app shells out in three
-places — `writer.validate()` (`ssh -G`), `tester.try_alias()` (`ssh`), and
-`keys.py` (`ssh-keygen -l` and `-t`). Two paths were on the table: bundle
-`openssh-client` as a manifest module, or reach the host's binaries through
-`flatpak-spawn --host`.
+The app shells out in three places — `writer.validate()` (`ssh -G`),
+`tester.run()` (`ssh`), and `keys.py` (`ssh-keygen -l` and `-t`). Two paths
+were on the table: bundle `openssh-client` as a manifest module, or reach the
+host's binaries through `flatpak-spawn --host`.
+
+**Correction, measured 2026-08-08 and worth having in writing.** This entry
+first said there is no openssh inside the sandbox. There is:
+`org.gnome.Platform//50` ships `/usr/bin/ssh` and `/usr/bin/ssh-keygen`, at
+OpenSSH 10.4p1 against the host's 10.2p1. So there is a third path, and it is
+the one you fall into by writing no code at all — the app finds a plausible
+`ssh`, everything appears to work, and it is quietly the wrong program. That
+makes the seam more necessary rather than less: a bundled module was never
+required to reproduce the bundled-module failure modes below.
 
 **Decision.** `flatpak-spawn --host`, with `--talk-name=org.freedesktop.Flatpak`
 and **`--filesystem=home`** rather than `--filesystem=~/.ssh`. The sandbox is
@@ -205,12 +213,23 @@ Taking the narrower one would cost two features and buy an appearance.
   `flatpak-spawn` forwards the child's status but has failure codes of its own
   when the portal does not answer. That needs a branch and a test; the
   `fake_bin` fixture already covers this shape.
-- **Open, to be verified rather than assumed:** whether the host `ssh` reached
-  this way finds the user's agent. `flatpak-spawn --host` passes the sandbox's
-  environment, and `SSH_AUTH_SOCK` inside a Flatpak points at a path that only
-  exists inside. Test it directly — `flatpak-spawn --host ssh-add -l` from a
-  built bundle — before deciding whether `--socket=ssh-auth`, an explicit
-  `--env=`, or neither is the answer.
+- **The agent needs no permission at all** — measured 2026-08-08, flatpak
+  1.16.6 on `org.gnome.Platform//50`. `SSH_AUTH_SOCK` is passed into the
+  sandbox unchanged (`/run/user/1000/gcr/ssh`), and because the command runs
+  on the host that path is valid where it is used.
+  `flatpak-spawn --host ssh-add -l` listed every key, exit 0, with no
+  `--socket=ssh-auth` and no `--env=`. **Do not add `--socket=ssh-auth`**: it
+  would bind the agent at a sandbox path and hand the host a path that only
+  exists inside, which is the failure this bullet was written to look for.
+- **`flatpak-spawn` exits 1 when it cannot start the command**, and forwards
+  the child's own status otherwise — 42 comes back 42, 255 comes back 255.
+  That matters because `tester.interpret()` reads a status as ssh's verdict.
+  1 is safe to claim, because the real `ssh` never returns it in either shape
+  we run: `ssh -F … -G host` gives 0 or 255 (a bad option, a missing config
+  file and a failed lookup are all 255), and the connection test runs `true`
+  on the far side. `host.spawn_failed()` carries this, so a host without
+  openssh reads as `NO_SSH` rather than as ssh rejecting the config — which
+  would otherwise mean the user could never save.
 - `parvussh --list` survives untouched: `parvussh/cli.py` imports no GTK, and
   `pip install` puts the console script in `/app/bin` with no manifest line and
   no permission of its own. What changes is how it is called, so the README

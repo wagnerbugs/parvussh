@@ -698,17 +698,20 @@ license is declared, and the string `OWNER` appears nowhere.
       used by `writer.validate()`, `tester.build_command()` and both callers
       in `keys.py`. Plain argv outside a sandbox, `flatpak-spawn --host`
       inside one. `tests/test_host.py` drives both sides with `fake_bin`
-- [ ] **Two measurements that need a real bundle, not a guess.** Both are
-      named in D5 and neither is implemented, on purpose:
-      1. Does the host `ssh` find the user's agent? `SSH_AUTH_SOCK` inside a
-         Flatpak points at a path that only exists inside. Measure with
-         `flatpak-spawn --host ssh-add -l`, then decide between
-         `--socket=ssh-auth`, an explicit `--env=`, or neither.
-      2. What does `flatpak-spawn` exit with when the host has no openssh?
-         Outside a sandbox that case is a `FileNotFoundError` every caller
-         already handles. Inside one it is an exit status, and
-         `tester.interpret()` would read it as ssh's own. Measure it, then map
-         it to `NO_SSH` with a `fake_bin` test for the code
+- [x] **Both measurements taken on 2026-08-08**, against
+      `org.gnome.Platform//50` with `flatpak run --talk-name=…`, which needs
+      no manifest and no bundle. Written up in D5:
+      1. The agent needs **no permission** — `SSH_AUTH_SOCK` is passed in
+         unchanged and the command runs where that path is real. Do not add
+         `--socket=ssh-auth`; it would make this worse, not better
+      2. `flatpak-spawn` exits **1** when it cannot start the command and
+         forwards the child's status otherwise. `host.spawn_failed()` reads
+         it, so a host without openssh is `NO_SSH` instead of a config the
+         user can never save
+- [ ] Target `org.gnome.Platform//50` — `org.flathub.Stable`, GNOME 50.4,
+      carrying Python 3.13.14, PyGObject 3.56.3, GTK 4.22.4 and libadwaita
+      1.9.3. All four clear the floors in `CLAUDE.md` §1, and 3.13 is a row
+      the CI matrix already runs
 - [ ] `io.github.wagnerbugs.ParvuSsh.yaml` manifest against a current GNOME
       runtime; build locally with `flatpak-builder`
 - [ ] README: the Flatpak install section, with the `alias parvussh=…` line
