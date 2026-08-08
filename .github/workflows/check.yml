@@ -77,6 +77,13 @@ jobs:
     # is how the app is actually run and the only way to reach the GTK stack.
     name: gui (${{ matrix.runner }})
     runs-on: ${{ matrix.runner }}
+    env:
+      # A container has no accessibility bus, so GTK warns once per process
+      # that it could not reach org.a11y.Bus — and the gtk fixture fails any
+      # test that made GTK complain. That check is worth keeping on a real
+      # desktop, so the fix belongs here: the warning names this variable as
+      # its own remedy, and it is a fact about the runner, not about the app.
+      GTK_A11Y: none
     strategy:
       fail-fast: false
       matrix:
