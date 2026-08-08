@@ -195,6 +195,7 @@ make test-gui   # pytest -m gui under xvfb-run
 make lint       # ruff check + ruff format --check
 make run        # python -m parvussh
 make check      # lint + test + test-gui — run before every commit
+make flatpak    # build the Flatpak from the working tree and install it
 ```
 
 System dependencies (documented in README, installed by `make setup`):

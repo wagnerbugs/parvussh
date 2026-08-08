@@ -127,6 +127,34 @@ make install-user
 Instala o `.desktop` e os ícones em `~/.local/share`. Sem `sudo`, nada fora da
 sua pasta pessoal é tocado. Para desfazer: `make uninstall-user`.
 
+### Flatpak — quando o GTK da sua distribuição é antigo demais
+
+É a saída para o Debian 12 e o Mint 21 citados acima: o Flatpak carrega o
+próprio GTK, então a versão que a sua distribuição tem deixa de importar.
+
+```bash
+flatpak remote-add --if-not-exists --user flathub \
+    https://dl.flathub.org/repo/flathub.flatpakrepo
+flatpak install --user flathub org.gnome.Platform//50 org.gnome.Sdk//50
+make flatpak
+```
+
+O último comando constrói a partir da árvore atual e instala para o seu
+usuário. Depois disso o ParvuSsh aparece no menu como qualquer outro
+aplicativo, ou abre com `make flatpak-run`. Para remover: `make
+flatpak-uninstall`.
+
+O `ssh` que ele usa continua sendo **o seu**, não uma cópia dentro do pacote —
+com o seu `ssh-agent`, o seu `known_hosts` e o seu `ProxyCommand`. É uma
+decisão de projeto, com os motivos escritos em `docs/DECISIONS.md` D5.
+
+Para chamar pelo terminal, o comando fica atrás do `flatpak run`. Uma linha no
+seu `~/.bashrc` resolve:
+
+```bash
+alias parvussh='flatpak run --command=parvussh io.github.wagnerbugs.ParvuSsh'
+```
+
 ### Chamando pelo nome, de qualquer pasta
 
 Depois do `make setup`, digitar `parvussh` no terminal ainda responde

@@ -56,6 +56,17 @@ format. Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   `~/.ssh` instead of the system temp directory, still `0600`, and now
   dot-prefixed so a stray `Include *` cannot pick one up.
 
+- A Flatpak manifest, `io.github.wagnerbugs.ParvuSsh.yaml`, against
+  `org.gnome.Platform//50`. It is what reaches the Debian and Mint users the
+  GTK 4.12 floor keeps out: the runtime travels with the app, so the host's
+  GTK stops mattering. `make flatpak` builds and installs it, `make
+  flatpak-run` opens it, `make flatpak-uninstall` removes it and the build
+  directories. The `ssh` it runs is still the user's own, through
+  `flatpak-spawn --host` — verified inside the built sandbox, where the app
+  reaches OpenSSH 10.2p1 from the host while the runtime's own copy is
+  10.4p1. Every permission in the manifest is argued in `docs/DECISIONS.md`
+  D5, including the two that are deliberately absent.
+
 ### Fixed
 
 - The guide's markup was only ever checked in Portuguese: both tests read the

@@ -712,16 +712,23 @@ license is declared, and the string `OWNER` appears nowhere.
       carrying Python 3.13.14, PyGObject 3.56.3, GTK 4.22.4 and libadwaita
       1.9.3. All four clear the floors in `CLAUDE.md` §1, and 3.13 is a row
       the CI matrix already runs
-- [ ] `io.github.wagnerbugs.ParvuSsh.yaml` manifest against a current GNOME
-      runtime; build locally with `flatpak-builder`
-- [ ] README: the Flatpak install section, with the `alias parvussh=…` line
-- [ ] The config contract re-verified inside the sandbox, by hand: edit, save,
-      confirm the backup exists and the untouched blocks are byte-identical
+- [x] `io.github.wagnerbugs.ParvuSsh.yaml` manifest, built and installed on
+      2026-08-08. `make flatpak`, `make flatpak-run`, `make flatpak-uninstall`
+- [x] README: the Flatpak install section, with the `alias parvussh=…` line
+- [x] The config contract re-verified **inside the built sandbox**, against a
+      throwaway `HOME` rather than the owner's real one: backup created and
+      byte-identical to the original, the untouched block byte-identical in
+      the new file, the edit applied, mode still `0600`, no temp file left
+      behind. The seam was confirmed the same way — inside the app,
+      `host.command(["ssh", "-V"])` reaches the host's OpenSSH 10.2p1 while a
+      bare `ssh` reaches the runtime's 10.4p1, which is the whole of D5 in two
+      lines of output
 - [ ] Flathub submission only after all of the above
 
 **Gate:** install the built Flatpak on a machine whose GTK is older than 4.12
 and open it. That is the whole point of the milestone; anything short of it is
-a guess.
+a guess. **Still open** — it needs a second machine, and building on this one
+proves the packaging, not the reach.
 
 ```
 feat(packaging): ship a Flatpak manifest

@@ -25,7 +25,8 @@ endif
 
 .PHONY: setup test test-gui lint format run check clean \
         install-user uninstall-user check-lang check-stack \
-        screenshots icon-preview
+        screenshots icon-preview \
+        flatpak flatpak-run flatpak-uninstall
 
 # The system stack comes from the distribution, and the distribution decides
 # the package names. This prints the right command for whichever manager is
@@ -122,3 +123,20 @@ screenshots:
 # Regenerate docs/icon-preview.png from the committed SVGs.
 icon-preview:
 	$(BIN)/python tools/icon_preview.py docs/icon-preview.png
+
+# Build the Flatpak from the working tree and install it for this user.
+#
+# --disable-rofiles-fuse: the build only uses FUSE to make its own staging
+# directory read-only, and it is unavailable in containers and in some
+# sandboxed shells, where flatpak-builder stops with "Failure spawning
+# rofiles-fuse". Nothing about the resulting app changes.
+flatpak:
+	flatpak-builder --user --install --force-clean --disable-rofiles-fuse \
+		build-flatpak $(APP_ID).yaml
+
+flatpak-run:
+	flatpak run $(APP_ID)
+
+flatpak-uninstall:
+	flatpak uninstall --user --assumeyes $(APP_ID)
+	rm -rf build-flatpak .flatpak-builder

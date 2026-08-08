@@ -1,0 +1,83 @@
+# Flatpak manifest. Build it with `make flatpak`, or by hand:
+#
+#   flatpak-builder --user --install --force-clean \
+#       build-flatpak io.github.wagnerbugs.ParvuSsh.yaml
+#
+# Every permission below is argued in docs/DECISIONS.md D5. Read it before
+# adding one: this app is a front-end to the host's own OpenSSH, so the
+# sandbox is how the runtime is delivered, not a boundary the app hides
+# behind, and the manifest should not imply otherwise.
+app-id: io.github.wagnerbugs.ParvuSsh
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+command: parvussh
+
+finish-args:
+  # The usual GTK 4 set: Wayland first, X11 only as a fallback, ipc for the
+  # X11 case, dri so rendering is not done on the CPU.
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --share=ipc
+  - --device=dri
+
+  # D5. The narrower --filesystem=~/.ssh loses two things: an `Include`
+  # pointing outside that directory becomes invisible, and the key picker
+  # starts returning document-portal paths that work here and not in the
+  # user's ssh — a config line only ParvuSsh can read.
+  - --filesystem=home
+
+  # D5. Runs the user's own ssh and ssh-keygen through `flatpak-spawn --host`,
+  # so their agent, their known_hosts and their ProxyCommand all still work.
+  # This is the permission a Flathub reviewer will ask about; the answer is
+  # that a copy of ssh the user never runs would be configuring a program
+  # that does not exist on their machine.
+  - --talk-name=org.freedesktop.Flatpak
+
+  # Deliberately absent, and both are measurements rather than opinions:
+  #
+  #   --share=network   Nothing in the sandbox opens a socket. ssh runs on the
+  #                     host, so the connection it makes is the host's.
+  #   --socket=ssh-auth SSH_AUTH_SOCK already arrives unchanged, and the
+  #                     command runs where that path is real. Adding this
+  #                     would bind the agent at a sandbox-only path and hand
+  #                     the host something it cannot open.
+
+modules:
+  - name: parvussh
+    buildsystem: simple
+    build-commands:
+      # No runtime dependencies by design (CLAUDE.md §5): PyGObject comes from
+      # the runtime, and --no-index makes a stray one fail the build loudly
+      # instead of reaching the network.
+      - pip3 install --no-index --no-build-isolation --no-deps
+        --prefix=${FLATPAK_DEST} .
+
+      # Installed unmodified. `make install-user` rewrites Exec= to point at a
+      # checkout; here the plain `Exec=parvussh` is already right, because pip
+      # put that command in /app/bin.
+      - install -Dm644 data/${FLATPAK_ID}.desktop
+        ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
+      - install -Dm644 data/${FLATPAK_ID}.metainfo.xml
+        ${FLATPAK_DEST}/share/metainfo/${FLATPAK_ID}.metainfo.xml
+      - install -Dm644 data/icons/hicolor/scalable/apps/${FLATPAK_ID}.svg
+        ${FLATPAK_DEST}/share/icons/hicolor/scalable/apps/${FLATPAK_ID}.svg
+      - install -Dm644 data/icons/hicolor/symbolic/apps/${FLATPAK_ID}-symbolic.svg
+        ${FLATPAK_DEST}/share/icons/hicolor/symbolic/apps/${FLATPAK_ID}-symbolic.svg
+    sources:
+      # The working tree, so a local build tests what is on disk right now.
+      # A Flathub submission replaces this with a tagged git source — that
+      # repository holds its own copy of this manifest and is where the pin
+      # belongs.
+      - type: dir
+        path: .
+        # A `dir` source copies everything it is not told to skip, and the
+        # venv alone is hundreds of megabytes of the wrong Python.
+        skip:
+          - .git
+          - .venv
+          - .flatpak-builder
+          - build-flatpak
+          - .pytest_cache
+          - .ruff_cache
+          - parvussh.egg-info
