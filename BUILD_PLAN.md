@@ -21,15 +21,17 @@ a new session.
 Settled with the owner on 2026-08-06, at the end of the session that added
 M16. Do these in order; each one makes the next cheaper.
 
-1. **Scrub two addresses out of the history.** `4c30328` replaced them in the
-   working tree, but the old commits still carry a live VPS address with the
-   account name on it, and a LAN host. Low severity — and the cost of cleaning
-   is near zero while the repository is private, solo and unforked, and never
-   that low again. `git filter-repo` plus a force push. Skip it deliberately if
-   the owner decides it is not worth the rewrite; do not skip it by forgetting.
-2. **Make the `gui` job green.** See the pending note under M15: one line,
-   `GTK_A11Y: none`, in the workflow. A red check that nobody attends to stops
-   being read.
+1. ~~**Scrub two addresses out of the history.**~~ Done on 2026-08-08.
+   `git filter-repo --replace-text` rewrote all 34 commits, putting the RFC
+   5737 addresses in the old versions too. The tip tree came out byte for byte
+   identical — only the past changed. Every SHA moved, so any note that quotes
+   one from before that date is quoting a commit that no longer exists.
+   Publishing it was not a force push: the GitHub repository was deleted and
+   recreated, because a force push leaves the old commits orphaned but still
+   reachable by SHA. There was nothing to lose — no issues, no PRs, no forks,
+   no releases.
+2. ~~**Make the `gui` job green.**~~ Done on 2026-08-08, and green on the
+   first run after it. See M15.
 3. **Make the repository public.** Nothing in the code is private, and two
    things depend on it: the `metainfo.xml` URLs that `appstreamcli` reports as
    unreachable (M14's gate result), and Flathub, which does not take closed
@@ -553,15 +555,22 @@ the project is for personal use for the next few months, and `make check` runs
 locally before every commit. Revisit when someone other than the owner starts
 sending changes.
 
-- [ ] `.github/workflows/ci.yml` — Ubuntu runner, install
+- [x] `.github/workflows/check.yml` — Ubuntu runner, install
   `python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 xvfb openssh-client`, then
   `make lint`, `make test`, `make test-gui`
 - [ ] Coverage report on `parvussh/core`, failing under 90%
-- [ ] Status badges in the README
+- [ ] Status badges in the README — waiting on step 3 above; a badge on a
+  private repository renders as a broken image for everyone but the owner
 
 **Gate:** CI green on a pull request.
 
-### Pending — the `gui` job has been red since the workflow landed
+### Resolved — the `gui` job is green
+
+Fixed on 2026-08-08 by `GTK_A11Y: none` in the `gui` job's `env:`, exactly as
+the note below predicted. All seven jobs passed on the first run after it. The
+original diagnosis is kept because the reasoning is the reusable part: a
+warning that belongs to the environment gets answered in the workflow, not by
+softening a fixture that earns its keep on a real desktop.
 
 Recorded 2026-08-06. `lint` and all four `core` jobs pass; both `gui` jobs
 fail, on `ubuntu-24.04` and on `ubuntu-latest`.
@@ -583,13 +592,18 @@ job's `env:` — and it belongs in the workflow rather than in the fixture: the
 warning is an artefact of the environment, and softening the fixture would
 give up a check that has value on a real desktop.
 
-Do not tick M15 until this is green. A red check nobody attends to stops being
-read, and then the next failure is invisible.
+A red check nobody attends to stops being read, and then the next failure is
+invisible.
 
-Whoever picks this up: everything it needs already exists. `make check` is the
-whole pipeline, `make test-gui` falls back gracefully when `xvfb-run` is
-missing, and `tests/conftest.py` skips the gui suite cleanly when the typelibs
-are absent — so a runner without the gir packages reports skips, not failures.
+Everything it needed already existed. `make check` is the whole pipeline,
+`make test-gui` falls back gracefully when `xvfb-run` is missing, and
+`tests/conftest.py` skips the gui suite cleanly when the typelibs are absent —
+so a runner without the gir packages reports skips, not failures.
+
+One warning left, and it is not ours: `actions/checkout@v4` and
+`actions/setup-python@v5` pin Node 20, which GitHub has deprecated and is
+already forcing onto Node 24. It annotates every run today and becomes a
+failure whenever they stop forcing it. Bumping both actions is the whole fix.
 
 ```
 ci: run lint, unit tests and gui smoke tests on every push
