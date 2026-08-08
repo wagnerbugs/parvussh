@@ -1,5 +1,7 @@
 # ParvuSsh
 
+[![Estado da verificação](https://github.com/wagnerbugs/parvussh/actions/workflows/check.yml/badge.svg)](https://github.com/wagnerbugs/parvussh/actions/workflows/check.yml)
+
 **Gerencia suas conexões SSH lendo e escrevendo o seu `~/.ssh/config` de
 verdade.** Sem banco paralelo, sem formato proprietário, sem etapa de
 importação.

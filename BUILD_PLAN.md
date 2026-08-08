@@ -32,10 +32,12 @@ M16. Do these in order; each one makes the next cheaper.
    no releases.
 2. ~~**Make the `gui` job green.**~~ Done on 2026-08-08, and green on the
    first run after it. See M15.
-3. **Make the repository public.** Nothing in the code is private, and two
-   things depend on it: the `metainfo.xml` URLs that `appstreamcli` reports as
-   unreachable (M14's gate result), and Flathub, which does not take closed
-   source. Add the CI badge once step 2 is green.
+3. ~~**Make the repository public.**~~ Done on 2026-08-08, once the history was
+   clean and the checks were green. The CI badge is in the README, and
+   `appstreamcli validate` now passes on the metainfo: the homepage and
+   bugtracker URLs it could not reach are reachable. The one remaining note is
+   pedantic and deliberate — the component ID carries uppercase because it is
+   the App ID, settled in `docs/DECISIONS.md` D2.
 4. **Flatpak** — M17 below. The owner is reading up on it first and will pick
    it up in a later session.
 
@@ -559,8 +561,9 @@ sending changes.
   `python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 xvfb openssh-client`, then
   `make lint`, `make test`, `make test-gui`
 - [ ] Coverage report on `parvussh/core`, failing under 90%
-- [ ] Status badges in the README — waiting on step 3 above; a badge on a
-  private repository renders as a broken image for everyone but the owner
+- [x] Status badge in the README — the `check` workflow. Added once the
+  repository went public, because a badge on a private one renders as a broken
+  image for everyone but the owner
 
 **Gate:** CI green on a pull request.
 
