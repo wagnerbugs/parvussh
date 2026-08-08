@@ -666,8 +666,14 @@ license is declared, and the string `OWNER` appears nowhere.
 1. **`~/.ssh` access.** A declared permission, `--filesystem=~/.ssh:rw`. The
    easy half — but note the config contract still has to hold *through* the
    sandbox: dated backup, `0600`, atomic replace. Verify, do not assume.
-2. **Running `ssh` and `ssh-keygen`.** There is no host openssh inside the
-   sandbox. Two paths, and they are not equivalent:
+2. **Running `ssh` and `ssh-keygen`.** ~~Two paths, and they are not
+   equivalent~~ — **answered on 2026-08-08 by `docs/DECISIONS.md` D5:
+   `flatpak-spawn --host`, and `--filesystem=home` rather than `~/.ssh`.**
+   Read D5 before touching the manifest; it names the two changes `core/`
+   needs first and the one thing still to verify. The original framing is
+   kept below because the failure modes are the reusable part.
+
+   There is no host openssh inside the sandbox. Two paths:
    - **Bundle `openssh-client` in the manifest.** Self-contained, but the
      bundled `ssh` is a different program from the user's: it will not see the
      host's `ssh-agent` socket, `known_hosts`, or system-wide config unless
@@ -682,13 +688,23 @@ license is declared, and the string `OWNER` appears nowhere.
 
 ### Checklist
 
+- [x] Decide question 2, write it up as **D5** before implementing it
+- [x] `appstreamcli validate` clean once the repository is public — done when
+      the repository went public on 2026-08-08
+- [ ] **Move the validation and test temp files somewhere the host can see.**
+      `writer.validate()` and `tester.try_alias()` use `tempfile.mkstemp()`,
+      which lands in the sandbox's private `/tmp`. Do this before the manifest:
+      without it the app opens and fails on the first save. See D5.
+- [ ] One seam for reaching a host binary, used by `writer.py`, `tester.py` and
+      `keys.py`: plain `["ssh", …]` normally, `["flatpak-spawn", "--host",
+      "ssh", …]` inside a sandbox. `tester.interpret()` reads exit codes, and
+      `flatpak-spawn` has failure codes of its own — cover them with `fake_bin`
+- [ ] Verify the agent actually reaches the host `ssh`:
+      `flatpak-spawn --host ssh-add -l` from a built bundle. D5 leaves this
+      open on purpose rather than guessing
 - [ ] `io.github.wagnerbugs.ParvuSsh.yaml` manifest against a current GNOME
       runtime; build locally with `flatpak-builder`
-- [ ] Decide question 2, write it up as **D5** before implementing it
-- [ ] `core/tester.py` and `core/keys.py` reviewed against whichever path won:
-      both shell out, and both assume the user's ssh
-- [ ] `appstreamcli validate` clean once the repository is public (step 3 of
-      the agreed order clears the URL warnings)
+- [ ] README: the Flatpak install section, with the `alias parvussh=…` line
 - [ ] The config contract re-verified inside the sandbox, by hand: edit, save,
       confirm the backup exists and the untouched blocks are byte-identical
 - [ ] Flathub submission only after all of the above

@@ -132,3 +132,97 @@ invite an action, tooltips on every icon-only button. **No custom stylesheet.**
   not explain the other eight.
 - Revisit only if a specific screen proves genuinely unbuildable within
   libadwaita's vocabulary. Record it here if so.
+
+---
+
+## D5 — In the Flatpak, run the host's `ssh` and take `--filesystem=home`
+
+**Date:** 2026-08-08 · **Answers:** `BUILD_PLAN.md` M17, question 2
+
+**Context.** The Flatpak exists for one reason: the GTK 4.12 floor keeps
+Debian stable and Mint users out, and a Flatpak carries its own runtime. It is
+a way to reach them, not a way to contain the app.
+
+There is no openssh inside the sandbox, and the app shells out in three
+places — `writer.validate()` (`ssh -G`), `tester.try_alias()` (`ssh`), and
+`keys.py` (`ssh-keygen -l` and `-t`). Two paths were on the table: bundle
+`openssh-client` as a manifest module, or reach the host's binaries through
+`flatpak-spawn --host`.
+
+**Decision.** `flatpak-spawn --host`, with `--talk-name=org.freedesktop.Flatpak`
+and **`--filesystem=home`** rather than `--filesystem=~/.ssh`. The sandbox is
+a delivery mechanism here, not a security boundary, and the manifest and the
+Flathub submission say so in those words rather than implying otherwise.
+
+**Why not bundle openssh.** It is not merely a version-skew risk. Three things
+in our own catalog stop working, and none of them fails loudly:
+
+| Catalog option | What a sandboxed `ssh` does |
+|---|---|
+| `ProxyCommand` (example: `cloudflared access ssh --hostname %h`) | Cannot execute a host binary. The connection test dies for anyone behind a proxy command. |
+| `IdentityAgent` (example: `~/.1password/agent.sock`) | An arbitrary socket path is not reachable from inside. |
+| `UserKnownHostsFile` outside `~/.ssh` | Not readable. |
+
+The connection test is the feature that proves the app told the truth. A test
+that cannot run the user's real `ssh` is worse than no test.
+
+`validate()` is the one place bundling would have been defensible, and it is
+worth recording why: **`ssh -F <file> -G <host>` ignores `/etc/ssh/ssh_config`
+entirely.** Verified on OpenSSH 10.2p1 — with `-F`, `gssapiauthentication`
+flips from `yes` to `no`, `hashknownhosts` from `yes` to `no`, and the system
+`SendEnv` entries disappear. So validation is hermetic with respect to the
+system config, and a bundled `ssh` would differ from the user's only by
+version. That was not enough to carry the other three rows.
+
+**Why `--filesystem=home` and not `--filesystem=~/.ssh`.** Two features break
+under the narrower permission, and the second breaks silently:
+
+- `store.included_paths()` honours an absolute `Include` target, so
+  `Include ~/work/ssh.conf` works today. Under `~/.ssh` only, the app cannot
+  see the file — and would then write the main config as if it did not exist.
+- The `IdentityFile` picker writes whatever path the file dialog returns
+  (`ui/dialogs.py`, `display_path`). Under a narrow permission, choosing a key
+  outside `~/.ssh` goes through the document portal, which returns
+  `/run/user/1000/doc/<id>/<name>`. That path works for us and **not for the
+  user's `ssh`**, so we would write a line into `~/.ssh/config` that only
+  ParvuSsh can read. That is contract rule 1 broken quietly, which is the
+  worst way to break it.
+
+The wider permission is not a real widening. Once
+`--talk-name=org.freedesktop.Flatpak` is granted, arbitrary host commands can
+be run; arguing about `~/.ssh` versus `home` after that protects nothing.
+Taking the narrower one would cost two features and buy an appearance.
+
+**Consequences.**
+
+- **Two changes in `core/` before the manifest, or the app opens and fails on
+  the first click.** `writer.validate()` and `tester.try_alias()` build their
+  temp file with `tempfile.mkstemp()`, which lands in `/tmp` — private to the
+  sandbox and invisible to a host `ssh`. They need a directory both sides see:
+  `$XDG_RUNTIME_DIR/app/io.github.wagnerbugs.ParvuSsh/`, or `~/.ssh` itself,
+  where `write_atomic()` already puts its own temp file.
+- `tester.interpret()` decides everything from `ssh`'s exit code.
+  `flatpak-spawn` forwards the child's status but has failure codes of its own
+  when the portal does not answer. That needs a branch and a test; the
+  `fake_bin` fixture already covers this shape.
+- **Open, to be verified rather than assumed:** whether the host `ssh` reached
+  this way finds the user's agent. `flatpak-spawn --host` passes the sandbox's
+  environment, and `SSH_AUTH_SOCK` inside a Flatpak points at a path that only
+  exists inside. Test it directly — `flatpak-spawn --host ssh-add -l` from a
+  built bundle — before deciding whether `--socket=ssh-auth`, an explicit
+  `--env=`, or neither is the answer.
+- `parvussh --list` survives untouched: `parvussh/cli.py` imports no GTK, and
+  `pip install` puts the console script in `/app/bin` with no manifest line and
+  no permission of its own. What changes is how it is called, so the README
+  documents the alias in the Flatpak install section:
+  `alias parvussh='flatpak run --command=parvussh io.github.wagnerbugs.ParvuSsh'`
+- The Flathub submission needs the justification written before it is asked
+  for: this is a configurator for a host tool, in the same category as Builder
+  and Boxes, and a copy of `ssh` the user never runs would be configuring
+  something that does not exist on their machine.
+- No feature of the app is given up. What is given up is the claim of running
+  confined — which was never true for a front-end to the host's OpenSSH.
+- Revisit if Flatpak ever grows a narrower way to run one named host binary.
+  That would let us drop `--talk-name=org.freedesktop.Flatpak` and revisit
+  `--filesystem=home` in the same commit, since the argument above for the
+  wider path stops holding the moment the wider permission goes.
