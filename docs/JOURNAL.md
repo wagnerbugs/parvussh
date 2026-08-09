@@ -753,3 +753,169 @@ the project that no feature list makes.
 
 The binding constraint is reach, not quality. Hence the agreed order at the top
 of `BUILD_PLAN.md` and M17. **Next session starts at step 1.**
+
+---
+
+## 2026-08-08 — Session 4: a stranger's feedback, then the sandbox
+
+**Starting state.** Private repository, `gui` job red, two real addresses still
+in the history, M17 unstarted. Ended with the repository public, every check
+green, and a Flatpak installed and tested against a real VPS.
+
+The session started somewhere unusual: an infrastructure specialist — a
+friend's boss, with no stake in the project — sat down at the app and clicked
+through all of it. He liked it, and said the explanations could be sharper. The
+owner brought back two review documents drafted from that conversation.
+
+### Reviewing a review
+
+Both documents were largely right, and each contained one thing that would have
+shipped as a defect. The habit that caught them was reading the document
+against the real tools and the real code before applying a line of it.
+
+**The one that mattered.** `PasswordAuthentication`,
+`KbdInteractiveAuthentication` and `PubkeyAuthentication` exist in
+`sshd_config` as well as `ssh_config`, with different meanings, and our
+descriptions described the server. Nothing ParvuSsh writes reaches a server.
+Someone arriving from a hardening tutorial would have read the toggle as
+closing password login on their VPS. That is not polish; it is the app lying in
+the one place it claims to teach.
+
+**The one the document got wrong.** The guide review suggested `chmod 755 ~`
+for the case where a home directory is too open for sshd. Ubuntu 26.04 ships
+homes at `0750` — checked on this machine — and sshd only refuses when the home
+is group- or other-**writable**. So the command fixes nothing in the common
+case and loosens the distribution's default in a guide whose subject is safe
+defaults. `chmod go-w ~` takes the write bit and nothing else.
+
+**A blind spot the document reported backwards.** It claimed a markup error
+would break no test. Two tests cover exactly that — balanced tags and
+`Pango.parse_markup`. But both iterate `SECTIONS` from `data/guide.py`, which
+resolves through `t()` at the *active* locale, and the suite never leaves
+`pt_br`. The English guide had no net under it at all, on the day its text
+doubled in size.
+
+Worth generalising: **a test that reaches its subject through a global reads
+whatever that global happens to be.** Ours now walks every shipped locale, and
+the fix was verified by breaking a `</tt>` in the English guide on purpose and
+watching both tests fail, naming `en:agent`.
+
+### Clearing the ground
+
+Steps 1 to 3 of the agreed order, in one afternoon.
+
+**The history scrub.** `git filter-repo --replace-text` across 34 commits. The
+tip tree came out with an identical hash — only the past changed. Published by
+**deleting and recreating** the GitHub repository rather than force-pushing: a
+force push leaves the old commits orphaned but reachable by SHA for as long as
+GitHub takes to collect them, and there was nothing to lose — no issues, no
+PRs, no forks, no releases. Verified by asking the API for the old SHAs, which
+now answer `No commit found`. Every SHA quoted in a note written before this
+date points at a commit that no longer exists.
+
+**The `gui` job.** One line, `GTK_A11Y: none`, exactly as the pending note
+predicted in Session 3. Green on the first run after it, and green ever since.
+
+**Public.** Which also closed M14's open gate: `appstreamcli` could not reach
+the homepage and bugtracker URLs in the metainfo while the repository was
+closed, and it validates now.
+
+A fourth thing arrived unasked: the CI annotation about Node 20. Both actions
+pinned it, GitHub was already forcing Node 24, and it becomes a failure when
+they stop. Bumped after checking each major's `action.yml` for `runs.using`
+rather than guessing which version fixed it.
+
+### M17 — the sandbox, decided before it was built
+
+The milestone said to decide the `ssh` question with the failure modes written
+down, before any manifest existed. Doing it in that order is what made the rest
+cheap.
+
+**D5: `flatpak-spawn --host`, and `--filesystem=home`.** The argument that
+settled it was not version skew. Three options in our own catalog stop working
+against a sandboxed `ssh`: `ProxyCommand` cannot execute a host binary,
+a custom `IdentityAgent` socket is unreachable, and a `UserKnownHostsFile`
+outside `~/.ssh` is not readable. The connection test is the feature that
+proves the app told the truth, and a test that cannot run the user's real `ssh`
+is worse than no test.
+
+The wider filesystem permission is the same argument turned around. Under
+`--filesystem=~/.ssh`, an absolute `Include` becomes invisible and the key
+picker starts returning document-portal paths — a line written into
+`~/.ssh/config` that works for us and not for the user's `ssh`. Contract rule 1
+broken quietly. Neither costs anything real to avoid, because
+`--talk-name=org.freedesktop.Flatpak` already permits any host command; arguing
+about `~/.ssh` versus `home` after that protects nothing.
+
+Said plainly in D5 and worth repeating here: **the sandbox is how the runtime
+is delivered, not a boundary this app hides behind.** For a front-end to the
+host's OpenSSH it never could be. The reach is the point — the GTK 4.12 floor
+is what keeps Debian and Mint users out, and a bundled runtime is the only
+thing that fixes it.
+
+### Three measurements, and one premise that was wrong
+
+D5 named two things as open rather than guessing at them. Both turned out to be
+answerable the same afternoon, with no manifest and no bundle:
+`flatpak run --talk-name=org.freedesktop.Flatpak` on the bare runtime
+reproduces the sandbox well enough.
+
+**The premise was wrong.** D5 said there is no openssh inside the sandbox.
+`org.gnome.Platform//50` ships `/usr/bin/ssh`, at OpenSSH 10.4p1 against this
+host's 10.2p1. That makes the seam *more* necessary: without it the app finds a
+plausible `ssh`, appears to work, and is quietly configuring a program the user
+never runs. The third path is the one you fall into by writing no code at all.
+
+**The agent needs no permission.** `SSH_AUTH_SOCK` is passed into the sandbox
+unchanged, and because the command runs on the host, that path is valid where
+it is used. Recorded with a warning not to add `--socket=ssh-auth`, which would
+bind the agent at a sandbox-only path and cause exactly the breakage the note
+was written to look for. The instinct to add a permission was wrong in the
+direction nobody checks.
+
+**`flatpak-spawn` exits 1** when it cannot start the command, and forwards the
+child's status otherwise. That is worth having because `interpret()` reads a
+status as ssh's verdict — and `validate()` would have read it as ssh rejecting
+the config, leaving a user on a host without openssh unable to save anything.
+1 is safe to claim only because the real `ssh` never returns it in either shape
+we run: a bad option, a missing config file and a failed lookup are all 255,
+and the connection test runs `true` remotely. Measured, not assumed.
+
+### What shipped
+
+`parvussh/core/host.py` is the only module that knows which side of a sandbox
+it is on: `command()` for the argv, `temp_config()` for a file the host can
+read, `spawn_failed()` for the status. It also made two callers shorter —
+`validate()` and `run()` had duplicated the same mkstemp-chmod-unlink dance.
+
+The manifest builds with `make flatpak`. Verified inside the built sandbox
+against a throwaway `HOME`: backup created and byte-identical, untouched block
+byte-identical, edit applied, mode `0600`, no temp file left behind. Then the
+owner opened it and tested a real VPS from inside the Flatpak, and it connected
+by key through the host's `ssh`. That screenshot is the whole of D5 working
+with a person in the middle rather than a script.
+
+Two permissions are deliberately absent, with the reason written beside them in
+the manifest so nobody adds them in good faith later: `--share=network`,
+because nothing in the sandbox opens a socket when `ssh` runs on the host, and
+`--socket=ssh-auth`, above.
+
+### A small thing the screenshot caught
+
+`ServerAliveInterval` read "ex.: 60" two centimetres from a spinner displaying
+60. The first review document had flagged it and correctly called it out of
+scope — it was never an i18n problem, it was one line in `ui/rows.py`. Fixed
+for all five numeric options, with a test on each side of the rule: the example
+appears where nothing on screen already carries the value, and nowhere else.
+
+### For the next session
+
+M17 has one item left and it is the gate: **install the built Flatpak on a
+machine whose GTK is older than 4.12 and open it.** Building here proved the
+packaging; it did not prove the reach, and reach was the entire reason for the
+milestone. It needs a second machine — a Debian 12 or Mint 21, VM or otherwise.
+
+After that, the Flathub submission, whose manifest is a tagged git source
+rather than the `type: dir` used for local builds, and whose review will ask
+about `--talk-name=org.freedesktop.Flatpak`. D5 is the answer; it was written
+before it was needed, which was the point.
