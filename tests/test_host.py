@@ -1,8 +1,8 @@
 """Reaching the host's openssh from inside a sandbox, and from outside one.
 
-`docs/DECISIONS.md` D5. Two behaviours are worth pinning: the argv grows a
-`flatpak-spawn --host` prefix inside a Flatpak and nothing outside one, and the
-temp config lands somewhere the host can actually read.
+Two behaviours are worth pinning: the argv grows a `flatpak-spawn --host`
+prefix inside a Flatpak and nothing outside one, and the temp config lands
+somewhere the host can actually read.
 
 There is no Flatpak here, and there does not need to be. `in_sandbox()` reads
 one path and `flatpak-spawn` is one more binary on `PATH`, so `fake_bin` and a

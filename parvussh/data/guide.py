@@ -1,8 +1,9 @@
 """The help guide's structure: which sections exist and in what order.
 
 The prose lives in `parvussh/i18n/pt_br/guide.py` under `guide.<key>.title` and
-`guide.<key>.body` (docs/DECISIONS.md D3). Bodies are Pango markup — `<tt>`
-around commands, and nothing else.
+`guide.<key>.body`, because every user-visible string lives under
+`parvussh/i18n/`. Bodies are Pango markup — `<tt>` around commands, `<b>` for
+the one rule worth emphasising, and nothing else.
 """
 
 from __future__ import annotations

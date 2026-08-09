@@ -1,7 +1,7 @@
 """Shared fixtures.
 
-Safety rule from CLAUDE.md §8: no test may read or write the developer's real
-`~/.ssh`. Everything that touches a home directory goes through `fake_home`.
+The safety rule: no test may read or write the developer's real `~/.ssh`.
+Everything that touches a home directory goes through `fake_home`.
 """
 
 from __future__ import annotations
@@ -85,9 +85,9 @@ def fake_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 class FakeBin:
     """A PATH holding only the shims a test installs, and a log of their argv.
 
-    CLAUDE.md §8: nothing in the suite may shell out to a real `ssh` or
-    `ssh-keygen`. PATH is emptied, so a command the test did not install
-    raises `FileNotFoundError` — which is exactly the "openssh-client is not
+    Nothing in the suite may shell out to a real `ssh` or `ssh-keygen`. PATH
+    is emptied, so a command the test did not install raises
+    `FileNotFoundError` — which is exactly the "openssh-client is not
     installed" case we need to cover anyway.
     """
 

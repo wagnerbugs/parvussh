@@ -70,7 +70,7 @@ def test_the_basic_fields_are_in_the_catalog() -> None:
 
 
 def test_every_entry_has_a_description() -> None:
-    """Catches a catalog row added without its pt-BR text (D3)."""
+    """Catches a catalog row added without its pt-BR text."""
     for keyword in CATALOG:
         assert keyword.description, keyword.name
         assert not keyword.description.startswith("kw."), (

@@ -98,7 +98,7 @@ def test_an_edit_reaches_the_file(app, config_file: Path) -> None:
 
 
 def test_saving_leaves_every_other_block_untouched(app, config_file: Path) -> None:
-    """The promise the whole project rests on (CLAUDE.md §4, rule 1)."""
+    """The promise the whole project rests on: an unedited block is untouched."""
     app.editor.hostname.set_text("203.0.113.99")
 
     app.save_current()

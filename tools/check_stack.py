@@ -4,8 +4,8 @@ Stdlib only, and it never imports parvussh: this runs with the system python3,
 before the venv exists, on a machine that may be missing everything it looks
 for. Anything cleverer than that would fail before it could explain itself.
 
-The floor it enforces is the one CLAUDE.md and the README state. When they
-move, this moves with them.
+The floor it enforces is the one the README states. When that moves, this
+moves with it.
 """
 
 from __future__ import annotations

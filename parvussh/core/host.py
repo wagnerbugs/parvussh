@@ -1,10 +1,10 @@
 """Reaching the user's own openssh, from inside a sandbox or outside one.
 
-`docs/DECISIONS.md` D5: in the Flatpak the app runs the host's `ssh` and
-`ssh-keygen` through `flatpak-spawn --host`, because a bundled copy would be a
-different program from the one the user runs in their terminal. Two things
-follow from that, and both live here so the rest of `core` does not have to
-know which side of a sandbox it is on:
+In the Flatpak the app runs the host's `ssh` and `ssh-keygen` through
+`flatpak-spawn --host`, because a bundled copy would be a different program
+from the one the user runs in their terminal. Three things follow from that,
+and all of them live here so the rest of `core` does not have to know which
+side of a sandbox it is on:
 
 1. **The argv gets a prefix.** `command()` adds it, or does not.
 2. **A temp file is not a temp file.** Inside a Flatpak `/tmp` is private to
@@ -16,10 +16,10 @@ know which side of a sandbox it is on:
    and a status is what `interpret()` reads as ssh's own verdict.
    `spawn_failed()` tells the two apart.
 
-Note for anyone reading D5 and expecting an empty sandbox: the GNOME runtime
-does ship `/usr/bin/ssh`. That makes the seam more necessary, not less — the
-app would otherwise find a plausible ssh, validate against a version the user
-does not run, and fail only on the options that need the host.
+Note for anyone expecting an empty sandbox: the GNOME runtime does ship
+`/usr/bin/ssh`. That makes the seam more necessary, not less — the app would
+otherwise find a plausible ssh, validate against a version the user does not
+run, and fail only on the options that need the host.
 """
 
 from __future__ import annotations

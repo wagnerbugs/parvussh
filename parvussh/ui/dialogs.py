@@ -136,7 +136,7 @@ class TestResultDialog(Adw.AlertDialog):
     The heading and body are the interpretation; the expander holds the raw
     output for whoever wants to see exactly what ssh said. Colour carries no
     meaning here — eight of the ten statuses are failures, and each needs its
-    own sentence anyway (docs/DECISIONS.md D4).
+    own sentence anyway.
     """
 
     def __init__(self, result: TestResult) -> None:

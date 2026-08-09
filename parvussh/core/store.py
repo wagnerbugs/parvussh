@@ -1,6 +1,7 @@
 """The main config plus everything `Include` pulls in, loaded and saved as one.
 
-Contract rule 7 (CLAUDE.md §4): we only ever write files we read. `Include`
+The last rule of the config contract: we only ever write files we read.
+`Include`
 targets are editable precisely because we loaded them, and nothing outside
 `self.files` is ever touched.
 """

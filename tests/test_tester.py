@@ -277,7 +277,7 @@ def test_run_deletes_the_temp_config_even_when_ssh_explodes(monkeypatch) -> None
 def test_the_temp_config_is_somewhere_the_host_can_read(
     fake_bin: FakeBin, fake_home: Path
 ) -> None:
-    """D5: the system temp directory is private to a Flatpak sandbox.
+    """The system temp directory is private to a Flatpak sandbox.
 
     A config written there is invisible to the host `ssh` we hand the path to,
     so it goes in `~/.ssh` — dot-prefixed, because a glob does not match a

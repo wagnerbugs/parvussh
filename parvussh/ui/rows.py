@@ -4,8 +4,9 @@ A typed widget is a promise that every value it can hold round-trips. A
 `Adw.SpinRow` bounded 0..3600 cannot hold `ConnectTimeout 99999`, and a
 `Adw.SwitchRow` cannot hold `Compression maybe` — both would quietly rewrite
 the user's file the first time it was saved. So a row whose current value does
-not fit its widget falls back to plain text, where anything survives
-(CLAUDE.md §4, rules 1 and 3).
+not fit its widget falls back to plain text, where anything survives — the
+config contract keeps an unedited block byte for byte and never drops an
+option it does not recognise.
 """
 
 from __future__ import annotations

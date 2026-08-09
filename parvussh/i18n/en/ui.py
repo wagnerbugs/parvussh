@@ -1,6 +1,6 @@
 """Window, sidebar, editor, dialog and command line copy (English).
 
-Same house style as the pt-BR catalog, from CLAUDE.md §7:
+Same house style as the pt-BR catalog:
 
 - Sentence case. "Create key", never "Create Key".
 - A button names the action it performs, and the confirmation echoes the same
@@ -122,7 +122,7 @@ STRINGS: dict[str, str] = {
     ),
     # -- connection test --------------------------------------------------
     # One title/detail pair per status in parvussh/core/tester.py. Core hands
-    # back a code; the wording is here (docs/DECISIONS.md D3).
+    # back a code; the wording is here.
     "test.running": "Testing {alias}…",
     "test.output_label": "ssh output",
     "test.error.no_alias": "Enter the alias before testing.",

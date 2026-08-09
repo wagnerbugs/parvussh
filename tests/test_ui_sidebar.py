@@ -54,7 +54,7 @@ def test_the_subtitle_summarises_the_connection(listed) -> None:
 
 
 def test_a_host_without_a_hostname_says_so(listed) -> None:
-    """core returns "" here; the sidebar supplies the wording (D3)."""
+    """core returns "" here; the sidebar supplies the wording."""
     assert listed.sidebar.rows()[1].get_subtitle() == "sem HostName"
 
 

@@ -47,7 +47,7 @@ class KeyToolError(Exception):
     """`ssh-keygen` refused the job. The message is its own output, if any.
 
     Core raises typed errors rather than sentences; the UI decides what to
-    say (docs/DECISIONS.md D3).
+    say, because `core` carries no translated text.
     """
 
 
@@ -158,7 +158,7 @@ def generate_command(
     """The exact argv we would run. Split out so a test can assert on it.
 
     Inside a Flatpak it arrives wrapped in `flatpak-spawn --host`, so the key
-    is made by the same `ssh-keygen` the user has in their terminal (D5).
+    is made by the same `ssh-keygen` the user has in their terminal.
     """
     argv = ["ssh-keygen", "-t", kind, "-f", str(path), "-N", passphrase]
     if kind == "rsa":

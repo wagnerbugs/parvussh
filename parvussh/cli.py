@@ -2,7 +2,7 @@
 
 Argument handling lives here rather than in `ui/app.py` so that `--list` never
 imports GTK. Listing the aliases is exactly what you want over ssh on a machine
-with no graphical stack installed, and `core` is free of `gi` (CLAUDE.md §3)
+with no graphical stack installed, and `core` imports no `gi`
 precisely so that is possible. The UI is imported lazily, inside `main`.
 
 Unrecognised arguments are handed to GTK rather than refused: `--display`,

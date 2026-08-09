@@ -1,4 +1,4 @@
-"""The translation runtime, per docs/DECISIONS.md D3."""
+"""The translation runtime: one catalog per language, none of it in `ui/`."""
 
 from __future__ import annotations
 

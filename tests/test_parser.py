@@ -131,7 +131,7 @@ def test_subtitle_joins_user_host_and_non_default_port() -> None:
 
 
 def test_subtitle_is_empty_without_a_hostname() -> None:
-    """Core returns nothing to say; the UI decides how to say it (D3)."""
+    """Core returns nothing to say; the UI decides how to say it."""
     assert named(parse_fixture("basic.config"), "github.com").subtitle() == ""
 
 

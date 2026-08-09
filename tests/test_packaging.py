@@ -1,7 +1,7 @@
 """The names GNOME matches on, and the promises the docs make.
 
-CLAUDE.md §1: two filenames must equal the app id exactly, or the shell shows
-a generic icon under Wayland and a Flathub submission is rejected. Nothing
+Two filenames must equal the app id exactly, or the shell shows a generic
+icon under Wayland and a Flathub submission is rejected. Nothing
 about that fails loudly at runtime, so it is pinned here.
 """
 
@@ -48,7 +48,7 @@ def test_the_app_id_is_settled() -> None:
 
 
 def test_the_owner_placeholder_is_gone() -> None:
-    """CLAUDE.md §1 forbids the literal string anywhere in the tree."""
+    """The placeholder must not survive anywhere in the tree."""
     tracked = [
         path
         for pattern in ("*.py", "*.md", "*.toml", "*.xml", "*.desktop", "Makefile")

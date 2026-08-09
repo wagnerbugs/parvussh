@@ -1,6 +1,6 @@
 """Window, sidebar, editor, dialog and command line copy (pt-BR).
 
-House style, from CLAUDE.md §7:
+House style:
 
 - Sentence case. "Criar chave", never "Criar Chave".
 - A button names the action it performs, and the confirmation echoes the same
@@ -126,7 +126,7 @@ STRINGS: dict[str, str] = {
     ),
     # -- connection test --------------------------------------------------
     # One title/detail pair per status in parvussh/core/tester.py. Core hands
-    # back a code; the wording is here (docs/DECISIONS.md D3).
+    # back a code; the wording is here.
     "test.running": "Testando {alias}…",
     "test.output_label": "Saída do ssh",
     "test.error.no_alias": "Informe o apelido antes de testar.",

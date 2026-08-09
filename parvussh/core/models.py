@@ -2,8 +2,8 @@
 
 A `Block` keeps every original line it was built from, so a block the user did
 not edit is written back byte for byte. Only blocks marked `dirty` are ever
-re-rendered — that is contract rule 1 in CLAUDE.md §4, and everything else in
-this module exists to keep it true.
+re-rendered — that is the first rule of the config contract, and everything
+else in this module exists to keep it true.
 """
 
 from __future__ import annotations
@@ -80,7 +80,7 @@ class Block:
         """The sidebar's second line: `user@hostname`, plus `:port` when set.
 
         Empty when there is no HostName. The UI supplies the wording for that
-        case; core holds no translated text (docs/DECISIONS.md D3).
+        case; `core` holds no translated text.
         """
         hostname = self.get("HostName")
         if not hostname:

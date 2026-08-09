@@ -1,6 +1,6 @@
 """`core`, `data` and `i18n` must stay importable without a display.
 
-CLAUDE.md §3: only `parvussh/ui/**` may touch GTK. This keeps the logic
+Only `parvussh/ui/**` may touch GTK. This keeps the logic
 testable headless and keeps a future CLI or TUI possible. The check parses the
 source instead of grepping, so the word "gi" inside a comment or a Portuguese
 string never trips it and never hides a real import either.

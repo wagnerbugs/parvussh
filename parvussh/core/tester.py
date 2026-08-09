@@ -22,7 +22,7 @@ TIMEOUT = 25
 CONNECT_TIMEOUT = 8
 
 # Status codes, not sentences. The UI turns each into t("test.<status>.title")
-# and t("test.<status>.detail") — core carries no translated text (D3).
+# and t("test.<status>.detail") — `core` carries no translated text.
 AUTH = "auth"
 REACHABLE = "reachable"
 DNS = "dns"
@@ -87,7 +87,7 @@ def build_command(alias: str, config_path: str) -> list[str]:
 
     Inside a Flatpak this comes back wrapped in `flatpak-spawn --host`, so the
     ssh that answers is the user's own — the one that can reach their agent and
-    run their `ProxyCommand` (D5).
+    run their `ProxyCommand`.
     """
     return host.command(
         [

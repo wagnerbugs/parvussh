@@ -48,8 +48,8 @@ def test_the_test_uses_the_form_not_the_saved_file(
     run_test(app, pump)
 
     config = Path(fake_bin.args("ssh")[1])
-    # Not the saved config, and not the system temp directory either: D5 puts
-    # it in ~/.ssh, where a sandboxed build's host ssh can still read it.
+    # Not the saved config, and not the system temp directory either: it goes
+    # in ~/.ssh, where a sandboxed build's host ssh can still read it.
     assert config.name.startswith(".parvussh-")
     assert config.parent == fake_home / ".ssh"
     assert config != fake_home / ".ssh" / "config"

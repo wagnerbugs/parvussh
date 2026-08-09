@@ -28,13 +28,13 @@ finish-args:
   - --share=ipc
   - --device=dri
 
-  # D5. The narrower --filesystem=~/.ssh loses two things: an `Include`
+  # The narrower --filesystem=~/.ssh loses two things: an `Include`
   # pointing outside that directory becomes invisible, and the key picker
   # starts returning document-portal paths that work here and not in the
   # user's ssh — a config line only ParvuSsh can read.
   - --filesystem=home
 
-  # D5. Runs the user's own ssh and ssh-keygen through `flatpak-spawn --host`,
+  # Runs the user's own ssh and ssh-keygen through `flatpak-spawn --host`,
   # so their agent, their known_hosts and their ProxyCommand all still work.
   # This is the permission a Flathub reviewer will ask about; the answer is
   # that a copy of ssh the user never runs would be configuring a program

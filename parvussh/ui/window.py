@@ -1,7 +1,7 @@
 """The main window: connection list on the left, form on the right.
 
 The window owns the `ConfigSet` and coordinates. It holds no config-parsing
-logic of its own (CLAUDE.md §3) and no literal user-visible strings (D3) —
+logic of its own and no literal user-visible strings —
 `Sidebar` and `Editor` own their widgets, `core` owns the file, `i18n` owns
 the words.
 """

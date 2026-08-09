@@ -1,8 +1,8 @@
 """Everything between "the user pressed Salvar" and bytes on disk.
 
-The order is not negotiable (CLAUDE.md §4): validate, then back up, then write
-atomically. A config that ssh refuses never reaches the file, and a file we do
-overwrite always has a dated copy beside it.
+The order is not negotiable: validate, then back up, then write atomically.
+A config that ssh refuses never reaches the file, and a file we do overwrite
+always has a dated copy beside it.
 """
 
 from __future__ import annotations

@@ -4,9 +4,9 @@ Keys are `kw.<OptionName>.desc` and the optional `kw.<OptionName>.example`,
 matching the structural catalog in `parvussh/data/keywords.py`. Every entry
 there needs a `.desc` here; `tests/test_keywords.py` fails otherwise.
 
-These descriptions are the app's teaching surface. Two rules, from CLAUDE.md
-§7: say what the option does in the user's words, and where the option exists
-to prevent a specific frustration, name that frustration — someone who has hit
+These descriptions are the app's teaching surface. Two rules: say what the
+option does in the user's words, and where the option exists to prevent a
+specific frustration, name that frustration — someone who has hit
 "too many authentication failures" should recognise it in `IdentitiesOnly`.
 
 Three of these options exist in `sshd_config` too, with a different meaning:

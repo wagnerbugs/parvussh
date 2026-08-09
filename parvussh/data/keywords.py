@@ -1,8 +1,8 @@
 """The ssh option catalog: which options we offer and how to render each one.
 
 Structure only. Every readable string — the description, the example — comes
-from `parvussh.i18n`, so adding a language never means touching this table
-(docs/DECISIONS.md D3). Adding an option is one line here and one line in
+from `parvussh.i18n`, so adding a language never means touching this table.
+Adding an option is one line here and one line in
 `i18n/pt_br/keywords.py`; `tests/test_keywords.py` fails if you forget the
 second.
 """
@@ -144,7 +144,7 @@ def get(name: str) -> Keyword | None:
 def for_option(name: str) -> Keyword:
     """An entry for `name`, inventing a plain text one when it is unknown.
 
-    Contract rule 3 (CLAUDE.md §4): an option missing from the catalog is
+    The config contract's third rule: an option missing from the catalog is
     still shown and still saved. It is never dropped for being unfamiliar.
     """
     return get(name) or Keyword(name, STR, group=OTHER, catalogued=False)
