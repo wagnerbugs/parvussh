@@ -38,8 +38,59 @@ M16. Do these in order; each one makes the next cheaper.
    bugtracker URLs it could not reach are reachable. The one remaining note is
    pedantic and deliberate — the component ID carries uppercase because it is
    the App ID, settled in `docs/DECISIONS.md` D2.
-4. **Flatpak** — M17 below. The owner is reading up on it first and will pick
-   it up in a later session.
+4. ~~**Flatpak**~~ — built on 2026-08-08. M17 below is done except its gate.
+
+---
+
+## Start here — handover, end of 2026-08-08
+
+Everything above is finished. The app is public, every check is green, and a
+Flatpak is built, installed and tested against a real VPS from inside the
+sandbox. Two things are left, **in this order**, and the order is not a
+preference.
+
+### 1. The M17 gate, and it is not optional
+
+**Install the built Flatpak on a machine whose GTK is older than 4.12, and
+open it.** A Debian 12 or a Linux Mint 21, in a VM or on real hardware.
+
+This is the only step that tests the thing the milestone exists for. Building
+on the development machine proved the packaging; it proved nothing about
+reach, and reach is the whole argument for shipping a Flatpak at all — the GTK
+4.12 floor is what keeps those users out. Submitting to Flathub without it
+would be submitting a guess dressed as a result.
+
+What to check once it opens: the window appears, the sidebar lists the
+connections from that machine's `~/.ssh/config`, and **the connection test
+reaches a real server**. That last one is what exercises
+`flatpak-spawn --host` on a machine that is not this one.
+
+### 2. Then Flathub
+
+Only after the gate. Three things are known about that submission already:
+
+- **The manifest changes shape.** `io.github.wagnerbugs.ParvuSsh.yaml` here
+  uses `type: dir` so a local build tests the working tree. Flathub takes a
+  tagged git source, and that repository holds its own copy — so the pin lives
+  there, not here.
+- **The reviewer will ask about `--talk-name=org.freedesktop.Flatpak`.** The
+  answer is written and predates the question: `docs/DECISIONS.md` D5. It is a
+  configurator for a host tool, in the same category as Builder and Boxes, and
+  a copy of `ssh` the user never runs would be configuring a program that does
+  not exist on their machine. Do not soften the manifest to make the review
+  easier; the two absent permissions are argued in place for the same reason.
+- **`appstreamcli validate` is clean** apart from one pedantic note about the
+  uppercase in the component ID, which is the App ID and is settled (D2).
+
+### Loose ends, none of them blocking
+
+- `make setup` still creates the venv; nothing about the Flatpak replaced the
+  ordinary install path, and the README documents both.
+- M15's coverage checkbox is still open: a coverage gate on `parvussh/core`
+  failing under 90%. Current coverage is 97%, so this is a ratchet nobody has
+  fitted, not a hole.
+- `flatpak-builder` needs `--disable-rofiles-fuse` in this environment; `make
+  flatpak` already passes it, and it changes nothing about the result.
 
 ---
 
