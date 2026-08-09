@@ -136,7 +136,7 @@ and an empty `config` with mode `600`.
 
 ## 4. Option catalog
 
-> **Amended by `docs/DECISIONS.md` D3.** `description` and `example` are no
+> **Amended.** `description` and `example` are no
 > longer literal fields on `Keyword`; they are properties resolving
 > `t("kw.<Name>.desc")` and `t("kw.<Name>.example")` against
 > `i18n/pt_br/keywords.py`. `search()` is unchanged because it reads the
@@ -288,7 +288,7 @@ a plain `STR` row with the description
 
 ## 5. Key discovery and creation
 
-> **Amended by `docs/DECISIONS.md` D3.** `core/` returns no translated text.
+> **Amended.** `core/` returns no translated text.
 > Where this section shows a pt-BR sentence coming out of `core/keys.py`, the
 > function raises a typed error instead and the UI supplies the wording.
 
@@ -342,7 +342,7 @@ alternative for anyone who cares.
 > importing the module broke collection. `test_command()` became
 > `build_command()` for the same reason.
 >
-> **Amended by `docs/DECISIONS.md` D3.** `TestResult` carries
+> **Amended.** `TestResult` carries
 > `(status, output, returncode)`, with `ok` derived from the status. The Heading and Body columns below are the
 > pt-BR copy for `t("test.<status>.title")` and `t("test.<status>.detail")`,
 > which live in `i18n/pt_br/ui.py`. Every other column — the ordering, the

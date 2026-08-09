@@ -22,3 +22,11 @@ htmlcov/
 # flatpak-builder
 build-flatpak/
 .flatpak-builder/
+
+# Working notes: ours, kept local. The agreement, the plan, the decision log
+# and the running journal. Removed from the repository on 2026-08-09 at the
+# owner's request; every one of them still exists on disk and is still written.
+CLAUDE.md
+BUILD_PLAN.md
+docs/DECISIONS.md
+docs/JOURNAL.md

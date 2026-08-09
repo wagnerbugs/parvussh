@@ -51,8 +51,8 @@ format. Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - `parvussh/core/host.py` is the one place that knows whether the app is
   running inside a sandbox. `writer.py`, `tester.py` and `keys.py` now ask it
   for the argv to run and for a temp file the host can read, which is what a
-  Flatpak build will need (`docs/DECISIONS.md` D5). Outside a Flatpak nothing
-  changes except where the validation and connection-test temp files live:
+  Flatpak build will need. Outside a Flatpak nothing changes except where the
+  validation and connection-test temp files live:
   `~/.ssh` instead of the system temp directory, still `0600`, and now
   dot-prefixed so a stray `Include *` cannot pick one up.
 
@@ -64,8 +64,8 @@ format. Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   directories. The `ssh` it runs is still the user's own, through
   `flatpak-spawn --host` — verified inside the built sandbox, where the app
   reaches OpenSSH 10.2p1 from the host while the runtime's own copy is
-  10.4p1. Every permission in the manifest is argued in `docs/DECISIONS.md`
-  D5, including the two that are deliberately absent.
+  10.4p1. Every permission is argued in the manifest where it is declared,
+  including the two that are deliberately absent.
 
 - A numeric row no longer prints the example the selector beside it is already
   showing. `ServerAliveInterval` read "ex.: 60" two centimetres from a spinner

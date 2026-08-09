@@ -145,8 +145,9 @@ aplicativo, ou abre com `make flatpak-run`. Para remover: `make
 flatpak-uninstall`.
 
 O `ssh` que ele usa continua sendo **o seu**, não uma cópia dentro do pacote —
-com o seu `ssh-agent`, o seu `known_hosts` e o seu `ProxyCommand`. É uma
-decisão de projeto, com os motivos escritos em `docs/DECISIONS.md` D5.
+com o seu `ssh-agent`, o seu `known_hosts` e o seu `ProxyCommand`. É decisão
+de projeto: uma cópia empacotada seria outro programa, com outra versão, e
+deixaria de funcionar justamente nas opções que dependem da sua máquina.
 
 Para chamar pelo terminal, o comando fica atrás do `flatpak run`. Uma linha no
 seu `~/.bashrc` resolve:

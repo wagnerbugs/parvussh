@@ -3,10 +3,17 @@
 #   flatpak-builder --user --install --force-clean \
 #       build-flatpak io.github.wagnerbugs.ParvuSsh.yaml
 #
-# Every permission below is argued in docs/DECISIONS.md D5. Read it before
-# adding one: this app is a front-end to the host's own OpenSSH, so the
-# sandbox is how the runtime is delivered, not a boundary the app hides
-# behind, and the manifest should not imply otherwise.
+# Every permission below is argued where it is declared, including the two
+# that are deliberately absent. Read the reason before adding one.
+#
+# The short version, for a reviewer: this is a configurator for a tool that
+# lives on the host. It edits ~/.ssh/config, which is the user's own file, and
+# it runs the user's own ssh rather than a copy of its own — a bundled ssh
+# would be configuring a program that does not exist on their machine, and
+# would silently break ProxyCommand, a custom IdentityAgent socket and any
+# UserKnownHostsFile outside ~/.ssh. The sandbox here is how the GNOME runtime
+# is delivered to distributions whose GTK is too old, not a boundary the app
+# hides behind, and this manifest does not pretend otherwise.
 app-id: io.github.wagnerbugs.ParvuSsh
 runtime: org.gnome.Platform
 runtime-version: '50'
@@ -47,9 +54,9 @@ modules:
   - name: parvussh
     buildsystem: simple
     build-commands:
-      # No runtime dependencies by design (CLAUDE.md §5): PyGObject comes from
-      # the runtime, and --no-index makes a stray one fail the build loudly
-      # instead of reaching the network.
+      # No runtime dependencies by design: PyGObject comes from the runtime,
+      # and --no-index makes a stray one fail the build loudly instead of
+      # reaching the network.
       - pip3 install --no-index --no-build-isolation --no-deps
         --prefix=${FLATPAK_DEST} .
 
