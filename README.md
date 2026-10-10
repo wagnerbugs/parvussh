@@ -30,7 +30,8 @@ SSH de você — é te apresentar a ele.
 - Cria chaves `ed25519`, `ecdsa` ou `rsa` e escolhe qual usar em cada conexão
 - Testa a conexão **antes de salvar**, e explica em português o que deu errado
 - **Acessar** abre o seu terminal já rodando `ssh apelido` — o mesmo comando
-  que você digitaria. Qual terminal, você escolhe em Preferências (`Ctrl+,`)
+  que você digitaria. Qual terminal, você escolhe em Preferências (`Ctrl+,`);
+  veja [Escolhendo o terminal](#escolhendo-o-terminal-do-acessar)
 - Guia passo a passo de como criar uma chave e instalá-la num servidor
 
 ### O teste de conexão diz coisa útil
@@ -211,6 +212,89 @@ make run
 | `Ctrl+S` | salvar |
 | `Ctrl+,` | preferências |
 | `F1` | ajuda |
+
+### Escolhendo o terminal do Acessar
+
+O botão **Acessar** abre o terminal padrão do sistema — no Ubuntu com GNOME, o
+Ptyxis. Para usar outro, abra as Preferências (`Ctrl+,`), escreva o comando
+dele em **Comando do terminal** e confirme com `Enter`. A linha **Em uso**,
+logo abaixo, diz qual terminal o botão vai abrir. Campo vazio volta ao padrão.
+
+**O que é o `-e`.** Um terminal é uma janela que roda um programa dentro dela —
+normalmente o seu shell, o `bash`. Para ele rodar outra coisa no lugar, como o
+`ssh hostinger`, é preciso avisar onde acabam as opções do terminal e onde
+começa o comando. Cada terminal escolheu um sinal para isso, e o `-e` (de
+*execute*, executar) é o mais comum. O aplicativo põe o comando logo depois do
+que você escreveu:
+
+```
+/usr/bin/ghostty -e   /bin/sh -c "… ssh hostinger …"
+└── você escreve ──┘  └─── o aplicativo acrescenta ───┘
+```
+
+O que vem depois do `-e` é um script curto: ele mostra `$ ssh hostinger` na
+tela, roda o comando e, se a conexão falhar, segura a janela aberta até você
+apertar `Enter`, para dar tempo de ler o erro. Sem o `-e`, o terminal não sabe
+o que fazer com aquele `/bin/sh` e fecha na hora — é o aviso de que ele
+"encerrou logo ao iniciar".
+
+Os sinais que você vai encontrar:
+
+| Sinal | Terminais |
+|---|---|
+| `-e` | xterm, Ghostty, Alacritty, Konsole |
+| `--` | Ptyxis, GNOME Terminal, WezTerm (depois de `start`) |
+| `-x` | Xfce Terminal |
+| nenhum | kitty, foot — o comando vai direto depois das opções |
+
+O `--` não é invenção de terminal: é uma convenção antiga do Unix que quer
+dizer "minhas opções acabaram, o resto não é para mim". Funciona em muitos
+comandos — `rm -- -arquivo-com-hifen` apaga um arquivo cujo nome começa com
+hífen, em vez de achar que é uma opção.
+
+**Exemplos.** Vale o caminho completo ou só o nome, se o programa estiver no
+`PATH` — a lista de pastas onde o sistema procura comandos, que você vê com
+`echo $PATH`.
+
+| Para abrir | Comando do terminal |
+|---|---|
+| o padrão do sistema | *(vazio)* |
+| xterm | `/usr/bin/xterm` |
+| xterm, com letra legível | `/usr/bin/xterm -fa Monospace -fs 13 -e` |
+| Ghostty | `/usr/bin/ghostty -e` |
+| Ghostty, com letra maior | `/usr/bin/ghostty --font-size=14 -e` |
+| Alacritty | `alacritty -e` |
+| WezTerm | `wezterm start --` |
+| kitty | `kitty` |
+| foot | `foot` |
+
+Os do xterm e o primeiro do Ghostty foram testados de verdade. Os outros vêm do
+manual de cada programa; se algum não abrir, a ajuda dele diz o sinal certo
+(veja abaixo).
+
+**Quando o sinal entra sozinho.** Se você escrever *só* o caminho de um
+terminal que o aplicativo conhece, ele mesmo acrescenta o sinal: por isso
+`/usr/bin/xterm` funciona sem `-e`. Ele conhece o Ptyxis, o GNOME Terminal, o
+Console (`kgx`), o Konsole, o Xfce Terminal, o xterm e o `x-terminal-emulator`
+do Debian. Para qualquer outro, ou quando você acrescenta opções suas — como a
+fonte do xterm —, o aplicativo usa exatamente o que está escrito, então o sinal
+vem no fim, escrito por você. É por isso que `/usr/bin/ghostty` sozinho dá
+erro e `/usr/bin/ghostty -e` funciona.
+
+**Descobrindo o sinal de outro terminal.** Procure por *execute* ou *command*
+na ajuda dele:
+
+```bash
+ghostty --help | grep -- -e   # "A special command line argument `-e <command>` …"
+man xterm                     # dentro do man, digite /-e program e Enter
+```
+
+**Por que o xterm abre minúsculo.** Ele é de 1984, e a fonte padrão dele é um
+desenho de 6×13 pixels que não acompanha a escala da tela. Maximizar a janela
+não ajuda: dá mais linhas e colunas, não letra maior — isso vale para qualquer
+terminal. `-fa Monospace` troca pela fonte do sistema e `-fs 13` define o
+tamanho; a janela cresce junto. Com ela já aberta, `Shift` + `+` do teclado
+numérico também aumenta a letra.
 
 ### Listando do terminal
 
