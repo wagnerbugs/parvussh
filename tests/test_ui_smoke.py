@@ -10,6 +10,7 @@ pytestmark = pytest.mark.gui
 
 ACTIONS = (
     "help",
+    "preferences",
     "reload",
     "new",
     "save",
@@ -43,7 +44,7 @@ def test_actions_needing_a_selection_start_disabled(window, name: str) -> None:
     assert window.lookup_action(name).get_enabled() is False
 
 
-@pytest.mark.parametrize("name", ("help", "reload", "new"))
+@pytest.mark.parametrize("name", ("help", "preferences", "reload", "new"))
 def test_actions_that_always_apply_stay_enabled(window, name: str) -> None:
     assert window.lookup_action(name).get_enabled() is True
 

@@ -37,6 +37,7 @@ STRINGS: dict[str, str] = {
     "menu.help": "Help and tips",
     "menu.reload": "Reload from disk",
     "menu.about": "About ParvuSsh",
+    "menu.preferences": "Preferences",
     "menu.duplicate": "Duplicate",
     "menu.delete": "Delete",
     # -- sidebar ----------------------------------------------------------
@@ -57,7 +58,10 @@ STRINGS: dict[str, str] = {
     "editor.test": "Test",
     "editor.test_tooltip": "Try to connect without saving",
     "editor.connect": "Connect",
-    "editor.connect_tooltip": "Open a terminal running ssh with this alias",
+    "editor.connect_tooltip": (
+        "Open a terminal running ssh with this alias. Choose the terminal in "
+        "Preferences."
+    ),
     "editor.more_tooltip": "More actions",
     "editor.help_tooltip": "What each option does",
     "editor.empty.title": "Choose a connection",
@@ -205,14 +209,41 @@ STRINGS: dict[str, str] = {
     ),
     "connect.no_terminal.heading": "No terminal found",
     "connect.no_terminal.body": (
-        "None of these is installed: {names}. Install one of them, or run "
-        "ssh {alias} in the terminal you already use."
+        "None of these is installed: {names}. Choose yours in Preferences, or "
+        "run ssh {alias} in the terminal you already use."
     ),
     "connect.failed.heading": "The terminal did not open",
     "connect.failed.body": (
-        "{terminal} exited right after starting, with code {code}. Open a "
-        "terminal and run ssh {alias}."
+        "{terminal} exited right after starting, with code {code}. If you chose "
+        "it in Preferences, check whether it needs an argument before the "
+        "command, such as -e. Meanwhile, run ssh {alias} in a terminal."
     ),
+    "connect.missing.heading": "The chosen terminal was not found",
+    "connect.missing.body": (
+        "{name} is not installed, or its path changed. Fix it in Preferences, or "
+        "clear the field to use the system's default terminal."
+    ),
+    # -- preferences ------------------------------------------------------
+    "prefs.title": "Preferences",
+    "prefs.terminal.title": "Terminal",
+    "prefs.terminal.description": (
+        "The program the Connect button opens. Leave it empty for the system "
+        "default, or write the path to another: /usr/bin/xterm. If it needs an "
+        "argument before the command, include it: alacritty -e."
+    ),
+    "prefs.terminal.command": "Terminal command",
+    "prefs.terminal.in_use": "In use",
+    "prefs.terminal.checking": "Looking…",
+    "prefs.terminal.automatic": "{name}, the system default",
+    "prefs.terminal.custom": "{name}, your choice",
+    "prefs.terminal.missing": (
+        "{name} was not found. Check the path, or clear the field to use the "
+        "system default."
+    ),
+    "prefs.terminal.none": (
+        "No known terminal is installed. Write the path to yours above."
+    ),
+    "prefs.error.save": "The preference was not written to {path}: {detail}",
     # -- option rows ------------------------------------------------------
     "rows.remove_tooltip": "Remove {name}",
     "rows.hint_with_example": "{description}  e.g. {example}",

@@ -58,7 +58,8 @@ def test_the_terminal_runs_ssh_on_the_alias(app, pump, fake_bin) -> None:
     launch = connect(app, pump)
 
     assert launch.status == terminal.OPENED
-    assert fake_bin.args("xdg-terminal-exec") == [
+    # The call before it asked which terminal the dispatcher would pick.
+    assert fake_bin.args("xdg-terminal-exec", -1) == [
         "--",
         SHELL,
         "-c",
@@ -126,6 +127,35 @@ def test_nothing_selected_does_nothing(window, fake_bin) -> None:
     fake_bin.install("xdg-terminal-exec")
     window.connect_current()
     assert window.last_launch is None
+
+
+# -- the terminal from the preferences -------------------------------------
+
+
+def test_the_chosen_terminal_is_the_one_that_opens(app, pump, fake_bin) -> None:
+    from parvussh.core import settings
+    from parvussh.core.settings import Settings
+
+    fake_bin.install("xdg-terminal-exec")
+    fake_bin.install("myterm")
+    settings.save(Settings(terminal="myterm --go"))
+
+    launch = connect(app, pump)
+
+    assert launch == terminal.Launch(terminal.OPENED, "myterm")
+    assert fake_bin.calls("xdg-terminal-exec") == []
+    assert fake_bin.args("myterm")[:2] == ["--go", SHELL]
+
+
+def test_a_chosen_terminal_that_is_gone_is_reported(app, pump, fake_bin) -> None:
+    from parvussh.core import settings
+    from parvussh.core.settings import Settings
+
+    fake_bin.install("xdg-terminal-exec")
+    settings.save(Settings(terminal="kitty"))
+
+    assert connect(app, pump).status == terminal.MISSING
+    assert fake_bin.calls("xdg-terminal-exec") == []
 
 
 # -- when it cannot open ---------------------------------------------------

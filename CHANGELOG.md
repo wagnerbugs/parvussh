@@ -15,6 +15,13 @@ format. Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   instead of closing with it. Unsaved edits are refused with a toast, since
   the terminal would not see them. In the Flatpak the terminal opens on the
   host, like ssh itself.
+- **Preferences** (`Ctrl+,`, or the sidebar menu) choose the terminal Acessar
+  opens: a path such as `/usr/bin/xterm`, or a full command such as
+  `alacritty -e` for a terminal that needs an argument first. Empty keeps the
+  system's own. The dialog says which terminal is in use right now — Ptyxis,
+  not the `xdg-terminal-exec` that picked it — and a chosen terminal that is
+  not installed is reported rather than quietly replaced. The choice lives in
+  `~/.config/parvussh/settings.ini`, the only file the app keeps of its own.
 - `parvussh --list` prints one line per connection — alias and
   `user@host:port` — and exits, for recalling an alias without opening the
   window. It imports no GTK, so it also works over ssh on a machine with no

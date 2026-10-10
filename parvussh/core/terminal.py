@@ -7,12 +7,13 @@ of a sandbox, because that is where both the terminal and `ssh` live.
 
 Two things here are not obvious:
 
-1. **Which terminal.** Linux has no single answer. `xdg-terminal-exec` is the
-   freedesktop proposal for "the terminal the user chose", and on Ubuntu it is
-   what GNOME itself calls, so it goes first. After it come the terminals of
-   the common desktops, each with the argument that separates its own options
-   from the command it should run. That argument differs per program, which is
-   why this is a table and not a guess.
+1. **Which terminal.** The user's own choice, when they made one in the
+   preferences. Otherwise Linux has no single answer: `xdg-terminal-exec` is
+   the freedesktop proposal for "the terminal the user chose", and on Ubuntu
+   it is what GNOME itself calls, so it goes first. After it come the
+   terminals of the common desktops, each with the argument that separates its
+   own options from the command it should run. That argument differs per
+   program, which is why this is a table and not a guess.
 2. **A failed connection must not vanish.** A terminal closes when its command
    exits, so an unreachable server would flash a window and take ssh's
    explanation with it. The command is wrapped in a few lines of `sh` that keep
@@ -25,10 +26,12 @@ terminal would run it a minute later, without the app in the way.
 
 from __future__ import annotations
 
+import shlex
 import subprocess
 import threading
 from collections.abc import Sequence
 from dataclasses import dataclass
+from pathlib import PurePath
 
 from parvussh.core import host
 
@@ -65,9 +68,14 @@ exit "$status"
 """
 
 # Status codes, not sentences — the UI owns the words.
+AUTOMATIC = "automatic"  # found in the table
+CUSTOM = "custom"  # the user's own, and installed
+MISSING = "missing"  # the user's own, and not installed
+NO_TERMINAL = "no-terminal"  # nothing in the table is installed
 OPENED = "opened"
-NO_TERMINAL = "no-terminal"
 FAILED = "failed"
+
+DISPATCHER = "xdg-terminal-exec"
 
 
 @dataclass(frozen=True)
@@ -82,7 +90,7 @@ class Terminal:
 #: plus Ptyxis, which GLib does not list and Ubuntu and Fedora now ship.
 #: `x-terminal-emulator` is Debian's pick-your-own; its policy requires `-e`.
 TERMINALS: tuple[Terminal, ...] = (
-    Terminal("xdg-terminal-exec", ("--",)),
+    Terminal(DISPATCHER, ("--",)),
     Terminal("ptyxis", ("--",)),
     Terminal("gnome-terminal", ("--",)),
     Terminal("kgx", ("-e",)),
@@ -91,6 +99,17 @@ TERMINALS: tuple[Terminal, ...] = (
     Terminal("x-terminal-emulator", ("-e",)),
     Terminal("xterm", ("-e",)),
 )
+
+
+@dataclass(frozen=True)
+class Choice:
+    """Which terminal Acessar would open, and why."""
+
+    status: str
+    terminal: Terminal | None = None
+    #: The program the user will see — Ptyxis, not the dispatcher that
+    #: picked it. For `MISSING`, what they typed.
+    name: str = ""
 
 
 @dataclass(frozen=True)
@@ -124,6 +143,69 @@ def find(candidates: Sequence[Terminal] = TERMINALS) -> Terminal | None:
     return next((item for item in candidates if item.name == chosen), None)
 
 
+def custom(command: str) -> Terminal:
+    """The user's terminal command as a `Terminal`. Raises `ValueError` on bad quoting.
+
+    A bare program the table knows — `/usr/bin/xterm` — gets the table's
+    separator, so a path is all most people need to write. Anything else is
+    taken word for word, with the command appended after it: `alacritty -e`,
+    `wezterm start --`, or `foot`, which takes the command as it is.
+    """
+    program, *extra = shlex.split(command)
+    if not extra:
+        known = next((t for t in TERMINALS if t.name == PurePath(program).name), None)
+        if known is not None:
+            return Terminal(program, known.separator)
+    return Terminal(program, tuple(extra))
+
+
+def describe(terminal: Terminal) -> str:
+    """The name of the program that will actually open, to show the user.
+
+    `xdg-terminal-exec` only dispatches, so naming it would not answer the
+    question. It is asked which desktop entry it would pick, and the last part
+    of that ID is the name: `org.gnome.Ptyxis.desktop` is Ptyxis.
+    """
+    name = PurePath(terminal.name).name
+    if name != DISPATCHER:
+        return name
+    try:
+        result = subprocess.run(
+            host.command([terminal.name, "--print-id"]),
+            capture_output=True,
+            text=True,
+            timeout=FIND_TIMEOUT,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return name
+    entry = result.stdout.strip().split(":")[0].removesuffix(".desktop")
+    if result.returncode != 0 or not entry:
+        return name
+    return entry.rsplit(".", 1)[-1]
+
+
+def choose(command: str = "") -> Choice:
+    """The terminal for `command` from the preferences, or the system's own.
+
+    A command the user set but that is not installed is `MISSING`, never a
+    quiet fall back to the table: they chose something, and opening something
+    else would hide that the choice is broken.
+    """
+    if not command.strip():
+        found = find()
+        if found is None:
+            return Choice(NO_TERMINAL)
+        return Choice(AUTOMATIC, found, describe(found))
+    try:
+        wanted = custom(command)
+    except ValueError:
+        return Choice(MISSING, name=command.strip())
+    if find([wanted]) is None:
+        return Choice(MISSING, name=wanted.name)
+    return Choice(CUSTOM, wanted, describe(wanted))
+
+
 def build_command(terminal: Terminal, alias: str, notice: str) -> list[str]:
     """The argv that opens `terminal` on `ssh alias`. Split out to be asserted on.
 
@@ -135,22 +217,25 @@ def build_command(terminal: Terminal, alias: str, notice: str) -> list[str]:
     )
 
 
-def launch(alias: str, notice: str, settle: float = SETTLE) -> Launch:
-    """Open the user's terminal on `ssh alias`. Blocks for up to `settle`.
+def launch(
+    alias: str, notice: str, command: str = "", settle: float = SETTLE
+) -> Launch:
+    """Open a terminal on `ssh alias`. Blocks for up to `settle`.
 
     `notice` is the sentence shown under a failed connection; it arrives as an
-    argument because `core` carries no translated text.
+    argument because `core` carries no translated text. `command` is the
+    terminal from the preferences, empty for the system's own.
 
     Some terminals hand the window to an instance already running and exit 0
     at once; others run until the session ends. Both are success. Only a
     non-zero exit within `settle` seconds means the window never opened.
     """
-    terminal = find()
-    if terminal is None:
-        return Launch(NO_TERMINAL)
+    choice = choose(command)
+    if choice.terminal is None:
+        return Launch(choice.status, choice.name)
     try:
         process = subprocess.Popen(
-            build_command(terminal, alias, notice),
+            build_command(choice.terminal, alias, notice),
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -161,14 +246,15 @@ def launch(alias: str, notice: str, settle: float = SETTLE) -> Launch:
     except OSError:
         # Found a moment ago and gone now, or not executable. Either way
         # there is no terminal this app can open.
-        return Launch(NO_TERMINAL)
+        gone = MISSING if choice.status == CUSTOM else NO_TERMINAL
+        return Launch(gone, choice.name)
     try:
         returncode = process.wait(timeout=settle)
     except subprocess.TimeoutExpired:
         # Still running, so the session lives in that window. Something has
         # to collect its exit status, or it lingers as a zombie.
         threading.Thread(target=process.wait, daemon=True).start()
-        return Launch(OPENED, terminal.name)
+        return Launch(OPENED, choice.name)
     if returncode == 0:
-        return Launch(OPENED, terminal.name)
-    return Launch(FAILED, terminal.name, returncode)
+        return Launch(OPENED, choice.name)
+    return Launch(FAILED, choice.name, returncode)

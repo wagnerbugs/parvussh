@@ -22,3 +22,12 @@ def test_expanduser_follows_the_redirect(fake_home: Path) -> None:
 
 def test_the_redirected_ssh_directory_starts_empty(fake_home: Path) -> None:
     assert list((fake_home / ".ssh").iterdir()) == []
+
+
+def test_the_app_s_settings_land_in_the_fake_home(fake_home: Path) -> None:
+    """The one file of its own the app writes must not reach ~/.config either."""
+    from parvussh.core import settings
+
+    # Set, this variable would point past the fake home at the real ~/.config.
+    assert "XDG_CONFIG_HOME" not in os.environ
+    assert settings.path().is_relative_to(fake_home)

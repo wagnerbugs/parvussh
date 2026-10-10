@@ -9,7 +9,6 @@ the words.
 from __future__ import annotations
 
 import threading
-from pathlib import Path
 
 import gi
 
@@ -19,7 +18,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gio, GLib  # noqa: E402
 
 from parvussh import APP_NAME  # noqa: E402
-from parvussh.core import terminal, tester  # noqa: E402
+from parvussh.core import settings, terminal, tester  # noqa: E402
 from parvussh.core.models import WILDCARD_CHARS, Block  # noqa: E402
 from parvussh.core.store import ConfigSet  # noqa: E402
 from parvussh.core.writer import ConfigError  # noqa: E402
@@ -27,6 +26,8 @@ from parvussh.i18n import t  # noqa: E402
 from parvussh.ui.dialogs import TestResultDialog  # noqa: E402
 from parvussh.ui.editor import Editor  # noqa: E402
 from parvussh.ui.help import HelpDialog  # noqa: E402
+from parvussh.ui.paths import shorten_home  # noqa: E402
+from parvussh.ui.preferences import PreferencesDialog  # noqa: E402
 from parvussh.ui.sidebar import Sidebar  # noqa: E402
 
 WINDOW_SIZE = (1020, 700)
@@ -39,6 +40,7 @@ ACCELERATORS = {
     "win.save": ["<Control>s"],
     "win.new": ["<Control>n"],
     "win.help": ["F1"],
+    "win.preferences": ["<Control>comma"],
 }
 
 #: Actions that need a selected connection to mean anything. Disabling the
@@ -80,6 +82,7 @@ class ParvuSshWindow(Adw.ApplicationWindow):
     def _install_actions(self) -> None:
         handlers = {
             "help": self.show_help,
+            "preferences": self.show_preferences,
             "reload": self.reload,
             "new": self.new_host,
             "save": self.save_current,
@@ -171,6 +174,9 @@ class ParvuSshWindow(Adw.ApplicationWindow):
     def show_help(self) -> None:
         HelpDialog().present(self)
 
+    def show_preferences(self) -> None:
+        PreferencesDialog().present(self)
+
     def new_host(self) -> None:
         """Append an empty connection and put the cursor in its alias field."""
         if self.config is None:
@@ -261,12 +267,20 @@ class ParvuSshWindow(Adw.ApplicationWindow):
         self.toasts.add_toast(running)
 
         def work() -> None:
-            GLib.idle_add(finish, terminal.launch(alias, notice))
+            # Read on every click, so a choice made a second ago in the
+            # preferences — or by hand in the file — is the one that opens.
+            command = settings.load().terminal
+            GLib.idle_add(finish, terminal.launch(alias, notice, command))
 
         def finish(launch: terminal.Launch) -> bool:
             running.dismiss()
             self.last_launch = launch
-            if launch.status == terminal.NO_TERMINAL:
+            if launch.status == terminal.MISSING:
+                self.show_message(
+                    t("connect.missing.heading"),
+                    t("connect.missing.body", name=launch.terminal),
+                )
+            elif launch.status == terminal.NO_TERMINAL:
                 names = ", ".join(item.name for item in terminal.TERMINALS)
                 self.show_message(
                     t("connect.no_terminal.heading"),
@@ -357,14 +371,6 @@ class ParvuSshWindow(Adw.ApplicationWindow):
         dialog = Adw.AlertDialog(heading=heading, body=body)
         dialog.add_response("ok", t("dialog.understood"))
         dialog.present(self)
-
-
-def shorten_home(path: Path) -> str:
-    """`/home/x/.ssh/config` -> `~/.ssh/config`. Left alone if not under home."""
-    try:
-        return f"~/{path.relative_to(Path.home())}"
-    except ValueError:
-        return str(path)
 
 
 __all__ = ["ParvuSshWindow", "shorten_home"]

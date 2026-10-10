@@ -39,6 +39,7 @@ STRINGS: dict[str, str] = {
     "menu.help": "Ajuda e dicas",
     "menu.reload": "Recarregar do disco",
     "menu.about": "Sobre o ParvuSsh",
+    "menu.preferences": "Preferências",
     "menu.duplicate": "Duplicar",
     "menu.delete": "Excluir",
     # -- sidebar ----------------------------------------------------------
@@ -59,7 +60,10 @@ STRINGS: dict[str, str] = {
     "editor.test": "Testar",
     "editor.test_tooltip": "Tenta conectar sem salvar",
     "editor.connect": "Acessar",
-    "editor.connect_tooltip": "Abre um terminal rodando ssh com este apelido",
+    "editor.connect_tooltip": (
+        "Abre um terminal rodando ssh com este apelido. O terminal se escolhe "
+        "em Preferências."
+    ),
     "editor.more_tooltip": "Mais ações",
     "editor.help_tooltip": "O que cada opção faz",
     "editor.empty.title": "Escolha uma conexão",
@@ -194,14 +198,41 @@ STRINGS: dict[str, str] = {
     ),
     "connect.no_terminal.heading": "Nenhum terminal encontrado",
     "connect.no_terminal.body": (
-        "Nenhum destes está instalado: {names}. Instale um deles, ou rode "
-        "ssh {alias} no terminal que você já usa."
+        "Nenhum destes está instalado: {names}. Escolha o seu em Preferências, "
+        "ou rode ssh {alias} no terminal que você já usa."
     ),
     "connect.failed.heading": "O terminal não abriu",
     "connect.failed.body": (
-        "O {terminal} encerrou logo ao iniciar, com código {code}. Abra um "
-        "terminal e rode ssh {alias}."
+        "O {terminal} encerrou logo ao iniciar, com código {code}. Se você o "
+        "escolheu em Preferências, confira se ele precisa de um argumento antes "
+        "do comando, como -e. Enquanto isso, rode ssh {alias} num terminal."
     ),
+    "connect.missing.heading": "O terminal escolhido não foi encontrado",
+    "connect.missing.body": (
+        "{name} não está instalado, ou o caminho mudou. Corrija em Preferências, "
+        "ou apague o campo para usar o terminal padrão do sistema."
+    ),
+    # -- preferences ------------------------------------------------------
+    "prefs.title": "Preferências",
+    "prefs.terminal.title": "Terminal",
+    "prefs.terminal.description": (
+        "O programa que o botão Acessar abre. Deixe vazio para usar o padrão do "
+        "sistema, ou escreva o caminho de outro: /usr/bin/xterm. Se ele precisar "
+        "de um argumento antes do comando, inclua-o: alacritty -e."
+    ),
+    "prefs.terminal.command": "Comando do terminal",
+    "prefs.terminal.in_use": "Em uso",
+    "prefs.terminal.checking": "Procurando…",
+    "prefs.terminal.automatic": "{name}, o padrão do sistema",
+    "prefs.terminal.custom": "{name}, o que você escolheu",
+    "prefs.terminal.missing": (
+        "{name} não foi encontrado. Confira o caminho, ou apague o campo para "
+        "usar o padrão do sistema."
+    ),
+    "prefs.terminal.none": (
+        "Nenhum terminal conhecido está instalado. Escreva acima o caminho do seu."
+    ),
+    "prefs.error.save": "A preferência não foi gravada em {path}: {detail}",
     # -- option rows ------------------------------------------------------
     "rows.remove_tooltip": "Remover {name}",
     "rows.hint_with_example": "{description}  ex.: {example}",

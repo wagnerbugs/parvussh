@@ -77,6 +77,9 @@ def fake_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     home = tmp_path / "home"
     (home / ".ssh").mkdir(parents=True, exist_ok=True)
     monkeypatch.setenv("HOME", str(home))
+    # The app's settings follow XDG_CONFIG_HOME when it is set, which would
+    # point straight past the fake home at the developer's real ~/.config.
+    monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
     monkeypatch.setattr(Path, "home", classmethod(lambda cls: home))
     return home
 

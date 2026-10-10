@@ -30,7 +30,7 @@ SSH de você — é te apresentar a ele.
 - Cria chaves `ed25519`, `ecdsa` ou `rsa` e escolhe qual usar em cada conexão
 - Testa a conexão **antes de salvar**, e explica em português o que deu errado
 - **Acessar** abre o seu terminal já rodando `ssh apelido` — o mesmo comando
-  que você digitaria
+  que você digitaria. Qual terminal, você escolhe em Preferências (`Ctrl+,`)
 - Guia passo a passo de como criar uma chave e instalá-la num servidor
 
 ### O teste de conexão diz coisa útil
@@ -209,6 +209,7 @@ make run
 |---|---|
 | `Ctrl+N` | nova conexão |
 | `Ctrl+S` | salvar |
+| `Ctrl+,` | preferências |
 | `F1` | ajuda |
 
 ### Listando do terminal
@@ -306,6 +307,10 @@ que já era seu antes de ele existir, e continua sendo depois. Se você desinsta
 o ParvuSsh amanhã, nada quebra — suas conexões continuam funcionando no
 terminal, no `scp`, no `rsync` e no Git, porque nunca deixaram de morar onde
 sempre moraram.
+
+O único arquivo que o aplicativo guarda para si é
+`~/.config/parvussh/settings.ini`, com o terminal escolhido em Preferências.
+Nenhuma conexão mora nele; apagá-lo só devolve o terminal padrão do sistema.
 
 Isso é o oposto de um gerenciador que importa suas conexões para um banco
 próprio. Aquele modelo pede confiança e cobra dependência. Este pede confiança

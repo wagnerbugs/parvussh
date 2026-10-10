@@ -407,7 +407,8 @@ the editor header replaces it with the selected alias.
 ### Sidebar — `Adw.NavigationPage` "Conexões"
 
 - Header: `+` button (`win.new`, tooltip "Nova conexão (Ctrl+N)") on the left;
-  hamburger menu on the right with "Ajuda e dicas" and "Recarregar do disco".
+  hamburger menu on the right with "Preferências", "Ajuda e dicas" and
+  "Recarregar do disco".
 - `Gtk.SearchEntry`, placeholder `Filtrar conexões…`, filters on alias,
   `HostName` and `User` via `set_filter_func` + `invalidate_filter`.
 - `Gtk.ListBox` with `boxed-list` style, one `Adw.ActionRow` per host block:
@@ -495,7 +496,8 @@ the form or the block has unsaved changes: "Salve antes de acessar: o
 terminal lê o arquivo, e esta alteração ainda não está nele." Wildcard
 aliases are refused as in the connection test.
 
-The terminal is the first of these installed on the host, found with
+The terminal is the one chosen in the preferences (below) when there is one.
+Otherwise it is the first of these installed on the host, found with
 `command -v` through `host.command()`; each is followed by the argument that
 ends its own options:
 
@@ -521,6 +523,30 @@ session. A non-zero exit within 1.5 s means the terminal never opened and is
 reported with its code; still running, or exit 0, counts as open. No terminal
 found → a dialog listing the names above and suggesting `ssh <alias>` by hand.
 
+### Preferences
+
+`Adw.PreferencesDialog`, opened from the sidebar menu or `Ctrl+,`. One group,
+**Terminal**, with two rows:
+
+- `Comando do terminal` — an `Adw.EntryRow` with an apply button. Empty means
+  the table above. A bare program the table knows (`/usr/bin/xterm`) gets the
+  table's separator; anything else is used word for word (`shlex`), with the
+  command appended: `alacritty -e`, `wezterm start --`, `foot`. No file
+  chooser: inside the Flatpak it would return a document-portal path, which
+  the host cannot open.
+- `Em uso` — what Acessar would open right now, looked up off the main thread
+  on open and after each apply. For `xdg-terminal-exec`, the name is the last
+  part of the desktop entry it picks (`--print-id`): Ptyxis, not the
+  dispatcher.
+
+A chosen terminal that is not installed is reported, never replaced by the
+table: "O terminal escolhido não foi encontrado".
+
+Stored in `$XDG_CONFIG_HOME/parvussh/settings.ini` (`~/.config/…` by default),
+section `[terminal]`, key `command`, written atomically. A file that cannot be
+parsed reads as the defaults. It is the only file the app keeps of its own,
+and it holds no connection.
+
 ### Help dialog
 
 `Adw.PreferencesDialog` with `search_enabled=True` and three pages:
@@ -535,7 +561,7 @@ found → a dialog listing the names above and suggesting `ssh <alias>` by hand.
 
 ### Keyboard
 
-`Ctrl+S` save, `Ctrl+N` new connection, `F1` help.
+`Ctrl+S` save, `Ctrl+N` new connection, `Ctrl+,` preferences, `F1` help.
 
 ---
 

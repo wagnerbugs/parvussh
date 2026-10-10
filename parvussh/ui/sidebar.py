@@ -87,6 +87,7 @@ class Sidebar(Adw.NavigationPage):
         )
 
         menu = Gio.Menu()
+        menu.append(t("menu.preferences"), "win.preferences")
         menu.append(t("menu.help"), "win.help")
         menu.append(t("menu.reload"), "win.reload")
         menu.append(t("menu.about"), "app.about")

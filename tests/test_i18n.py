@@ -66,6 +66,7 @@ SHARED_ACROSS_LOCALES = {
     "keypicker.summary",  # a format, not a sentence
     "keypicker.summary_no_comment",
     "sidebar.menu_tooltip",  # "Menu"
+    "prefs.terminal.title",  # "Terminal" is the same word in both
 }
 
 
