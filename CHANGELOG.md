@@ -7,6 +7,14 @@ format. Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- **Acessar** opens your own terminal on `ssh <alias>`, reading the saved
+  `~/.ssh/config`. The terminal is `xdg-terminal-exec` when installed — the
+  one the desktop says you chose — and otherwise the first of Ptyxis, GNOME
+  Terminal, Console, Konsole, Xfce Terminal, `x-terminal-emulator` and xterm.
+  When ssh cannot connect, the window stays open on its message until Enter
+  instead of closing with it. Unsaved edits are refused with a toast, since
+  the terminal would not see them. In the Flatpak the terminal opens on the
+  host, like ssh itself.
 - `parvussh --list` prints one line per connection — alias and
   `user@host:port` — and exits, for recalling an alias without opening the
   window. It imports no GTK, so it also works over ssh on a machine with no

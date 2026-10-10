@@ -419,8 +419,9 @@ the editor header replaces it with the selected alias.
 ### Editor — `Adw.NavigationPage` "Conexão"
 
 Header bar: `Adw.WindowTitle` showing the alias plus the source file path
-(`~/.ssh/config`) as subtitle; buttons `Testar` and `Salvar`
-(`suggested-action`); overflow menu with `Duplicar` and `Excluir`.
+(`~/.ssh/config`) as subtitle; `Acessar` at the start, on its own side of the
+title; buttons `Testar` and `Salvar` (`suggested-action`) at the end; overflow
+menu with `Duplicar` and `Excluir`.
 
 `Gtk.Stack` with two children:
 
@@ -485,6 +486,40 @@ toast "Salvo em ~/.ssh/config".
 
 On `ConfigError`, show: "O arquivo não foi gravado" / "O ssh recusou a
 configuração, então nada foi alterado no disco." plus the ssh message.
+
+### Connecting — `Acessar`
+
+Opens the user's own terminal on `ssh <alias>` (`core/terminal.py`). Unlike
+`Testar`, it reads the **saved** file, so it is refused with a toast while
+the form or the block has unsaved changes: "Salve antes de acessar: o
+terminal lê o arquivo, e esta alteração ainda não está nele." Wildcard
+aliases are refused as in the connection test.
+
+The terminal is the first of these installed on the host, found with
+`command -v` through `host.command()`; each is followed by the argument that
+ends its own options:
+
+| Terminal | Separator |
+|---|---|
+| `xdg-terminal-exec` | `--` |
+| `ptyxis` | `--` |
+| `gnome-terminal` | `--` |
+| `kgx` | `-e` |
+| `konsole` | `-e` |
+| `xfce4-terminal` | `-x` |
+| `x-terminal-emulator` | `-e` |
+| `xterm` | `-e` |
+
+The command it runs is `/bin/sh -c <HOLD> sh <alias> <notice>`. `HOLD` prints
+`$ ssh <alias>`, runs it, and only when ssh exits 255 — its own status for a
+connection it could not make or keep — prints the notice and waits for Enter,
+so the reason does not close with the window. The alias and the notice are
+positional arguments, never pasted into the script.
+
+Launched with `start_new_session=True`, so closing the app does not end the
+session. A non-zero exit within 1.5 s means the terminal never opened and is
+reported with its code; still running, or exit 0, counts as open. No terminal
+found → a dialog listing the names above and suggesting `ssh <alias>` by hand.
 
 ### Help dialog
 

@@ -58,6 +58,8 @@ STRINGS: dict[str, str] = {
     "editor.save": "Salvar",
     "editor.test": "Testar",
     "editor.test_tooltip": "Tenta conectar sem salvar",
+    "editor.connect": "Acessar",
+    "editor.connect_tooltip": "Abre um terminal rodando ssh com este apelido",
     "editor.more_tooltip": "Mais ações",
     "editor.help_tooltip": "O que cada opção faz",
     "editor.empty.title": "Escolha uma conexão",
@@ -173,6 +175,32 @@ STRINGS: dict[str, str] = {
     "test.unknown.title": "Não deu para concluir o teste",
     "test.unknown.detail": (
         "O ssh terminou com código {code}. A saída completa está abaixo."
+    ),
+    # -- connecting -------------------------------------------------------
+    # Statuses from parvussh/core/terminal.py. `connect.notice` is printed
+    # inside the terminal itself, under ssh's own message.
+    "connect.running": "Abrindo um terminal para {alias}…",
+    "connect.error.unsaved": (
+        "Salve antes de acessar: o terminal lê o arquivo, e esta alteração "
+        "ainda não está nele."
+    ),
+    "connect.error.wildcard": (
+        "Blocos com curinga valem para vários servidores, então não há um só "
+        "para acessar."
+    ),
+    "connect.notice": (
+        "A conexão falhou ou caiu, e o ssh disse por quê logo acima. O botão "
+        "Testar do ParvuSsh explica o erro. Pressione Enter para fechar."
+    ),
+    "connect.no_terminal.heading": "Nenhum terminal encontrado",
+    "connect.no_terminal.body": (
+        "Nenhum destes está instalado: {names}. Instale um deles, ou rode "
+        "ssh {alias} no terminal que você já usa."
+    ),
+    "connect.failed.heading": "O terminal não abriu",
+    "connect.failed.body": (
+        "O {terminal} encerrou logo ao iniciar, com código {code}. Abra um "
+        "terminal e rode ssh {alias}."
     ),
     # -- option rows ------------------------------------------------------
     "rows.remove_tooltip": "Remover {name}",

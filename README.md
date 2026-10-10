@@ -29,6 +29,8 @@ SSH de você — é te apresentar a ele.
   `bastion` ou `sessão` e veja o que aparece
 - Cria chaves `ed25519`, `ecdsa` ou `rsa` e escolhe qual usar em cada conexão
 - Testa a conexão **antes de salvar**, e explica em português o que deu errado
+- **Acessar** abre o seu terminal já rodando `ssh apelido` — o mesmo comando
+  que você digitaria
 - Guia passo a passo de como criar uma chave e instalá-la num servidor
 
 ### O teste de conexão diz coisa útil
@@ -314,7 +316,8 @@ uma vez, na hora de gravar, e devolve o controle em seguida.
 Estas coisas não vão entrar. A lista curta é o que mantém o aplicativo pequeno,
 e pedidos que caem nela são fechados com um obrigado.
 
-- Terminal embutido
+- Terminal embutido — o botão Acessar abre o *seu* terminal, não um dentro do
+  aplicativo
 - Orquestração de túneis e port-forward (as opções existem no formulário;
   gerenciar sessões vivas é outro produto)
 - Cofre de senhas — isso é o `ssh-agent` e o chaveiro do sistema

@@ -19,7 +19,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gio, GLib  # noqa: E402
 
 from parvussh import APP_NAME  # noqa: E402
-from parvussh.core import tester  # noqa: E402
+from parvussh.core import terminal, tester  # noqa: E402
 from parvussh.core.models import WILDCARD_CHARS, Block  # noqa: E402
 from parvussh.core.store import ConfigSet  # noqa: E402
 from parvussh.core.writer import ConfigError  # noqa: E402
@@ -45,7 +45,7 @@ ACCELERATORS = {
 #: *action* dims every button bound to it and leaves the header bar itself
 #: alone — turning the whole header insensitive would also disable the window
 #: controls, which is how you trap someone in a window they cannot close.
-NEEDS_SELECTION = ("save", "test", "delete", "duplicate")
+NEEDS_SELECTION = ("save", "test", "connect", "delete", "duplicate")
 
 
 class ParvuSshWindow(Adw.ApplicationWindow):
@@ -57,6 +57,7 @@ class ParvuSshWindow(Adw.ApplicationWindow):
         self.config: ConfigSet | None = None
         self.current: Block | None = None
         self.last_test_result: tester.TestResult | None = None
+        self.last_launch: terminal.Launch | None = None
 
         self.toasts = Adw.ToastOverlay()
         self.split = Adw.NavigationSplitView(
@@ -83,6 +84,7 @@ class ParvuSshWindow(Adw.ApplicationWindow):
             "new": self.new_host,
             "save": self.save_current,
             "test": self.test_current,
+            "connect": self.connect_current,
             "delete": self.delete_current,
             "duplicate": self.duplicate_current,
         }
@@ -238,6 +240,52 @@ class ParvuSshWindow(Adw.ApplicationWindow):
 
         # A worker thread, because ssh can sit for 25 seconds and a frozen
         # window is indistinguishable from a crashed one.
+        threading.Thread(target=work, daemon=True).start()
+
+    def connect_current(self) -> None:
+        """Open the user's terminal on `ssh <alias>`, reading the saved file."""
+        if self.current is None:
+            return
+        if self.editor.dirty or self.current.dirty:
+            # The terminal reads ~/.ssh/config. With an edit still on the form
+            # it would connect to something other than what is on screen.
+            self.toast(t("connect.error.unsaved"))
+            return
+        alias = self.editor.alias()
+        if any(char in alias for char in WILDCARD_CHARS):
+            self.toast(t("connect.error.wildcard"))
+            return
+
+        notice = t("connect.notice")
+        running = Adw.Toast(title=t("connect.running", alias=alias), timeout=0)
+        self.toasts.add_toast(running)
+
+        def work() -> None:
+            GLib.idle_add(finish, terminal.launch(alias, notice))
+
+        def finish(launch: terminal.Launch) -> bool:
+            running.dismiss()
+            self.last_launch = launch
+            if launch.status == terminal.NO_TERMINAL:
+                names = ", ".join(item.name for item in terminal.TERMINALS)
+                self.show_message(
+                    t("connect.no_terminal.heading"),
+                    t("connect.no_terminal.body", names=names, alias=alias),
+                )
+            elif launch.status == terminal.FAILED:
+                self.show_message(
+                    t("connect.failed.heading"),
+                    t(
+                        "connect.failed.body",
+                        terminal=launch.terminal,
+                        code=launch.returncode,
+                        alias=alias,
+                    ),
+                )
+            return False  # GLib.idle_add: run once
+
+        # Off the main thread: finding the terminal is a process of its own,
+        # and `launch` then waits to see whether the terminal stayed up.
         threading.Thread(target=work, daemon=True).start()
 
     def duplicate_current(self) -> None:

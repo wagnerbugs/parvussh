@@ -70,6 +70,15 @@ class Editor(Adw.NavigationPage):
         more.append(t("menu.duplicate"), "win.duplicate")
         more.append(t("menu.delete"), "win.delete")
 
+        # On the other side of the title from Testar and Salvar: those act on
+        # the form, this one uses the connection as it is saved.
+        header.pack_start(
+            Gtk.Button(
+                label=t("editor.connect"),
+                action_name="win.connect",
+                tooltip_text=t("editor.connect_tooltip"),
+            )
+        )
         header.pack_end(
             Gtk.Button(
                 label=t("editor.save"),

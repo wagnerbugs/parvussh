@@ -56,6 +56,8 @@ STRINGS: dict[str, str] = {
     "editor.save": "Save",
     "editor.test": "Test",
     "editor.test_tooltip": "Try to connect without saving",
+    "editor.connect": "Connect",
+    "editor.connect_tooltip": "Open a terminal running ssh with this alias",
     "editor.more_tooltip": "More actions",
     "editor.help_tooltip": "What each option does",
     "editor.empty.title": "Choose a connection",
@@ -185,6 +187,32 @@ STRINGS: dict[str, str] = {
         "previous config stays in the same folder, dated."
     ),
     "delete.done": "Connection deleted.",
+    # -- connecting -------------------------------------------------------
+    # Statuses from parvussh/core/terminal.py. `connect.notice` is printed
+    # inside the terminal itself, under ssh's own message.
+    "connect.running": "Opening a terminal for {alias}…",
+    "connect.error.unsaved": (
+        "Save before connecting: the terminal reads the file, and this change "
+        "is not in it yet."
+    ),
+    "connect.error.wildcard": (
+        "A wildcard block applies to several servers, so there is no single "
+        "one to connect to."
+    ),
+    "connect.notice": (
+        "The connection failed or dropped, and ssh said why just above. The "
+        "Test button in ParvuSsh explains the error. Press Enter to close."
+    ),
+    "connect.no_terminal.heading": "No terminal found",
+    "connect.no_terminal.body": (
+        "None of these is installed: {names}. Install one of them, or run "
+        "ssh {alias} in the terminal you already use."
+    ),
+    "connect.failed.heading": "The terminal did not open",
+    "connect.failed.body": (
+        "{terminal} exited right after starting, with code {code}. Open a "
+        "terminal and run ssh {alias}."
+    ),
     # -- option rows ------------------------------------------------------
     "rows.remove_tooltip": "Remove {name}",
     "rows.hint_with_example": "{description}  e.g. {example}",

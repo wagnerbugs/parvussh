@@ -158,7 +158,7 @@ def test_selecting_a_row_names_the_file_it_came_from(listed) -> None:
 def test_selecting_enables_the_actions_that_need_a_selection(listed) -> None:
     listed.sidebar.listbox.select_row(listed.sidebar.rows()[0])
 
-    for name in ("save", "test", "delete", "duplicate"):
+    for name in ("save", "test", "connect", "delete", "duplicate"):
         assert listed.lookup_action(name).get_enabled() is True, name
 
 

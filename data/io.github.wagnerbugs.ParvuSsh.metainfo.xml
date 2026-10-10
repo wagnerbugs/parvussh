@@ -47,6 +47,8 @@
       <li xml:lang="pt_BR">Cria chaves ed25519, ecdsa ou rsa e escolhe qual usar em cada conexão</li>
       <li>Tests the connection before saving, and explains what went wrong</li>
       <li xml:lang="pt_BR">Testa a conexão antes de salvar, e explica o que deu errado</li>
+      <li>Opens your own terminal on the connection, running ssh with its alias</li>
+      <li xml:lang="pt_BR">Abre o seu terminal já na conexão, rodando ssh com o apelido</li>
       <li>A step-by-step guide to creating a key and installing it on a server</li>
       <li xml:lang="pt_BR">Guia passo a passo de como criar e instalar uma chave num servidor</li>
       <li>A dated backup before every write, and validation with ssh -G</li>

@@ -8,7 +8,16 @@ import pytest
 
 pytestmark = pytest.mark.gui
 
-ACTIONS = ("help", "reload", "new", "save", "test", "delete", "duplicate")
+ACTIONS = (
+    "help",
+    "reload",
+    "new",
+    "save",
+    "test",
+    "connect",
+    "delete",
+    "duplicate",
+)
 
 
 def test_the_window_builds(window) -> None:
@@ -28,7 +37,7 @@ def test_the_empty_state_is_showing(window) -> None:
     assert window.editor.placeholder.get_title() == "Escolha uma conexão"
 
 
-@pytest.mark.parametrize("name", ("save", "test", "delete", "duplicate"))
+@pytest.mark.parametrize("name", ("save", "test", "connect", "delete", "duplicate"))
 def test_actions_needing_a_selection_start_disabled(window, name: str) -> None:
     """A live Salvar button with nothing to save is a lie about the state."""
     assert window.lookup_action(name).get_enabled() is False
