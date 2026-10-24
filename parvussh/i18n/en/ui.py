@@ -93,6 +93,10 @@ STRINGS: dict[str, str] = {
         "nothing was written. The list now shows {path} as it is on disk: "
         "check it and make your edit again."
     ),
+    "backups.left": (
+        "The old copies are still in {folder}: the trash refused them. The "
+        "app tries again on the next save."
+    ),
     "unsaved.heading": "Unsaved changes",
     "unsaved.body": "“{alias}” has changes that are not in the file yet.",
     "unsaved.discard": "Discard",

@@ -7,6 +7,12 @@ format. Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- Only the newest 3 backups of each config file stay beside it; older ones go
+  to the trash, from where they can be restored, and none is ever deleted
+  outright. Newest is read from the date in the name. Only names that match
+  `<file>.bak-YYYYMMDD-HHMMSS`, optionally followed by `-2`, `-3` …, are
+  counted: a copy made by hand under any other name is never touched. If the
+  trash refuses, the save still stands and a toast says the old copies stayed.
 - **Acessar** opens your own terminal on `ssh <alias>`, reading the saved
   `~/.ssh/config`. The terminal is `xdg-terminal-exec` when installed — the
   one the desktop says you chose — and otherwise the first of Ptyxis, GNOME

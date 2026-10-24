@@ -75,7 +75,9 @@ teste automatizado que falha se for quebrado.
 4. **Backup antes de cada gravação**, em `<config>.bak-AAAAMMDD-HHMMSS`, com
    permissão 600 (`-2`, `-3` se duas gravações caírem no mesmo segundo). Uma
    cópia que já existe nunca é sobrescrita, e se a cópia falhar, nada é
-   gravado. O aplicativo nunca apaga esses backups.
+   gravado. Ficam as 3 cópias mais novas — mais nova pela data no nome — e as
+   mais velhas vão para a **Lixeira**, de onde dá para restaurar. Nenhuma
+   cópia é apagada direto.
 5. **Validação antes de gravar.** O conteúdo vai para um arquivo temporário e
    passa por `ssh -G`. Se o ssh recusar, **nada** é gravado e a mensagem dele
    aparece para você.
@@ -83,7 +85,9 @@ teste automatizado que falha se for quebrado.
    `os.replace`. Ou o arquivo antigo está lá, ou o novo — nunca metade.
 7. **Nunca escrevemos num arquivo que não lemos.** Os arquivos trazidos por
    `Include` são editáveis justamente porque foram carregados; nada além
-   disso é tocado.
+   disso é tocado. A única exceção são as cópias antigas do item 4, e só as
+   que têm exatamente o nome `<arquivo>.bak-AAAAMMDD-HHMMSS` (ou com `-2`,
+   `-3`…): uma cópia que você fez à mão com outro nome nunca é tocada.
 8. **Mudanças de outros programas sobrevivem.** Antes de gravar, o arquivo é
    lido de novo. Se outro programa — um script de provisionamento, o seu
    editor de texto — mexeu nele desde que o aplicativo o abriu, a sua edição
@@ -370,10 +374,13 @@ compare com `diff`. Seu arquivo real fica intocado.
 ### Se mexer no arquivo real e se arrepender
 
 ```bash
-ls -lt ~/.ssh/config.bak-*                            # o mais recente primeiro
+ls ~/.ssh/config.bak-*                                # o mais recente por último
 diff ~/.ssh/config ~/.ssh/config.bak-20260728-183000
 cp ~/.ssh/config.bak-20260728-183000 ~/.ssh/config    # voltar atrás
 ```
+
+As cópias mais velhas que essas estão na Lixeira: no Arquivos, abra a
+Lixeira, clique com o botão direito na cópia e escolha **Restaurar**.
 
 ---
 

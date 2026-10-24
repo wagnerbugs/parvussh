@@ -19,16 +19,22 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
+from parvussh.core.backups import KEEP
+
 DIRECTORY = "parvussh"
 FILENAME = "settings.ini"
 TERMINAL = "terminal"
 COMMAND = "command"
+BACKUPS = "backups"
+COUNT = "keep"
 
 
 @dataclass(frozen=True)
 class Settings:
     #: What Acessar opens, as typed by the user. Empty means the system's own.
     terminal: str = ""
+    #: How many dated copies of each config file stay; older ones are trashed.
+    backups: int = KEEP
 
 
 def path() -> Path:
@@ -51,13 +57,17 @@ def load() -> Settings:
         parser.read_string(path().read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, configparser.Error):
         return Settings()
-    return Settings(terminal=parser.get(TERMINAL, COMMAND, fallback="").strip())
+    return Settings(
+        terminal=parser.get(TERMINAL, COMMAND, fallback="").strip(),
+        backups=_count(parser.get(BACKUPS, COUNT, fallback="")),
+    )
 
 
 def save(settings: Settings) -> Path:
     """Write `settings` atomically and return the path written."""
     parser = _parser()
     parser[TERMINAL] = {COMMAND: settings.terminal.strip()}
+    parser[BACKUPS] = {COUNT: str(max(settings.backups, 1))}
     target = path()
     target.parent.mkdir(parents=True, exist_ok=True)
     handle, temp = tempfile.mkstemp(dir=target.parent, prefix=f".{FILENAME}-")
@@ -68,6 +78,17 @@ def save(settings: Settings) -> Path:
     finally:
         Path(temp).unlink(missing_ok=True)
     return target
+
+
+def _count(text: str) -> int:
+    """The number of copies to keep: a typo means the default, never zero.
+
+    Keeping none would leave a write with nothing to undo it by.
+    """
+    try:
+        return max(int(text), 1)
+    except ValueError:
+        return KEEP
 
 
 def _parser() -> configparser.ConfigParser:

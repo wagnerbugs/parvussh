@@ -77,3 +77,35 @@ def test_a_file_without_the_section_reads_as_the_defaults() -> None:
     settings.path().parent.mkdir(parents=True)
     settings.path().write_text("[other]\nkey = value\n", encoding="utf-8")
     assert settings.load() == Settings()
+
+
+# -- how many config copies to keep -----------------------------------------
+
+
+def test_three_copies_are_kept_unless_told_otherwise() -> None:
+    assert settings.load().backups == 3
+
+
+def test_the_number_of_copies_is_read_back() -> None:
+    settings.save(Settings(backups=7))
+    assert settings.load().backups == 7
+
+
+def test_saving_one_setting_keeps_the_other() -> None:
+    settings.save(Settings(terminal="xterm", backups=5))
+    assert settings.load() == Settings(terminal="xterm", backups=5)
+
+
+@pytest.mark.parametrize(("written", "read"), [("0", 1), ("-4", 1), ("dez", 3)])
+def test_a_number_below_one_or_not_a_number_is_not_obeyed(
+    written: str, read: int
+) -> None:
+    """Zero copies would leave a write with nothing to undo it by."""
+    settings.path().parent.mkdir(parents=True)
+    settings.path().write_text(f"[backups]\nkeep = {written}\n", encoding="utf-8")
+    assert settings.load().backups == read
+
+
+def test_zero_is_saved_as_one() -> None:
+    settings.save(Settings(backups=0))
+    assert settings.load().backups == 1

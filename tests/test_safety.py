@@ -8,6 +8,10 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+import pytest
+
+from tests.conftest import FakeTrash
+
 REAL_HOME = Path(os.path.realpath(os.path.expanduser("~")))
 
 
@@ -31,3 +35,22 @@ def test_the_app_s_settings_land_in_the_fake_home(fake_home: Path) -> None:
     # Set, this variable would point past the fake home at the real ~/.config.
     assert "XDG_CONFIG_HOME" not in os.environ
     assert settings.path().is_relative_to(fake_home)
+
+
+@pytest.mark.gui
+def test_gui_tests_never_reach_the_real_trash(gtk, trash: FakeTrash) -> None:
+    """Pruning old config copies would otherwise fill the developer's Trash."""
+    from parvussh.ui import trash as module
+
+    assert module.to_trash is trash
+
+
+@pytest.mark.gui
+def test_a_trash_error_arrives_as_the_oserror_core_expects(
+    gtk, fake_home: Path
+) -> None:
+    """A path that does not exist: Gio refuses it before anything moves."""
+    from parvussh.ui.trash import gio_trash
+
+    with pytest.raises(OSError):
+        gio_trash(fake_home / "nothing-here")

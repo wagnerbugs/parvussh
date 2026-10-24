@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 from parvussh.core import backups
+from tests.conftest import FakeTrash
 
 STAMP = "20261024-131455"
 
@@ -105,3 +106,149 @@ def test_a_copy_that_fails_halfway_leaves_nothing_behind(
         backups.create(config)
 
     assert [path.name for path in config.parent.iterdir()] == ["config"]
+
+
+# -- keeping the newest few --------------------------------------------------
+
+
+def make(directory: Path, *names: str) -> None:
+    for item in names:
+        (directory / item).write_text(item)
+
+
+def test_the_newest_three_stay_and_the_rest_go_to_the_trash(
+    config: Path, trash: FakeTrash
+) -> None:
+    ssh = config.parent
+    make(
+        ssh,
+        "config.bak-20261012-100855",
+        "config.bak-20261015-142125",
+        "config.bak-20261024-124225",
+        "config.bak-20261024-131455",
+        "config.bak-20261024-131455-2",
+    )
+
+    assert backups.prune(config, 3, trash) == []
+
+    assert trash.names == ["config.bak-20261012-100855", "config.bak-20261015-142125"]
+    assert sorted(item.name for item in ssh.iterdir()) == [
+        "config",
+        "config.bak-20261024-124225",
+        "config.bak-20261024-131455",
+        "config.bak-20261024-131455-2",
+    ]
+
+
+def test_newest_is_read_from_the_name_not_the_modification_time(
+    config: Path, trash: FakeTrash
+) -> None:
+    """Our copies keep the original's mtime, so an old date can be on a new copy."""
+    old, new = (
+        config.with_name("config.bak-20250101-000000"),
+        config.with_name("config.bak-20261024-131455"),
+    )
+    make(config.parent, old.name, new.name)
+    os.utime(new, (1_000_000_000, 1_000_000_000))  # 2001
+
+    backups.prune(config, 1, trash)
+
+    assert trash.names == [old.name]
+
+
+def test_the_number_counts_as_a_number(config: Path, trash: FakeTrash) -> None:
+    """As text, `-10` sorts before `-2`; the tenth copy of a second is newer."""
+    make(
+        config.parent,
+        *(f"config.bak-20261024-131455{suffix}" for suffix in ["", "-2", "-10"]),
+    )
+
+    backups.prune(config, 2, trash)
+
+    assert trash.names == ["config.bak-20261024-131455"]
+    assert backups.family(config) == [
+        config.with_name("config.bak-20261024-131455-10"),
+        config.with_name("config.bak-20261024-131455-2"),
+    ]
+
+
+def test_nothing_outside_the_exact_pattern_is_ever_touched(
+    config: Path, trash: FakeTrash
+) -> None:
+    ssh = config.parent
+    strangers = [
+        "known_hosts.old",
+        "config.bak-2026-10-12",  # made by hand
+        "config.bak-20261015-pcd1310",  # made by hand
+        "config.bak-20261024-131455.tmp",
+        "config.bak-20261024-131455\n",  # `$` in a regex would let this in
+        "config.bak-٢٠٢٦١٠٢٤-131455",  # `\d` without ASCII would too
+        "config.bak",
+        "config.antes-20261024-131455",
+        "xconfig.bak-20261024-131455",
+        "work.conf.bak-20261024-131455",  # another file's family
+    ]
+    make(ssh, *strangers)
+    (ssh / "config.bak-20261024-000000").mkdir()
+    (ssh / "config.bak-20261024-000001").symlink_to(ssh / "known_hosts.old")
+    # The newest real copy, so anything else counted would be pruned.
+    make(ssh, "config.bak-20991231-235959")
+
+    backups.prune(config, 1, trash)
+
+    assert trash.names == []
+    assert (ssh / "config.bak-20261024-000000").is_dir()
+    for name in strangers:
+        assert (ssh / name).read_text() == name
+
+
+def test_each_file_has_its_own_family(config: Path, trash: FakeTrash) -> None:
+    included = config.with_name("work.conf")
+    included.write_text("Host w\n")
+    make(
+        config.parent,
+        "work.conf.bak-20261023-000000",
+        "work.conf.bak-20261024-000000",
+        "config.bak-20261023-000000",
+    )
+
+    backups.prune(included, 1, trash)
+
+    assert trash.names == ["work.conf.bak-20261023-000000"]
+
+
+def test_at_least_one_copy_always_stays(config: Path, trash: FakeTrash) -> None:
+    make(config.parent, "config.bak-20261023-000000", "config.bak-20261024-000000")
+
+    backups.prune(config, 0, trash)
+
+    assert trash.names == ["config.bak-20261023-000000"]
+
+
+def test_a_refused_copy_stays_and_the_others_still_go(
+    config: Path, trash: FakeTrash
+) -> None:
+    make(
+        config.parent,
+        "config.bak-20261021-000000",
+        "config.bak-20261022-000000",
+        "config.bak-20261023-000000",
+    )
+    trash.refuse = {"config.bak-20261022-000000"}
+
+    refused = backups.prune(config, 1, trash)
+
+    assert [path.name for path, _ in refused] == ["config.bak-20261022-000000"]
+    assert (config.parent / "config.bak-20261022-000000").exists()  # not deleted
+    assert trash.names == ["config.bak-20261021-000000"]
+
+
+def test_a_copy_made_by_save_joins_the_family(config: Path, trash: FakeTrash) -> None:
+    make(config.parent, "config.bak-20000101-000000")
+
+    made = backups.create(config)
+
+    assert backups.family(config) == [
+        made,
+        config.with_name("config.bak-20000101-000000"),
+    ]

@@ -10,7 +10,7 @@ import json
 import stat
 import sys
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
@@ -173,6 +173,38 @@ def fake_bin(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> FakeBin:
     return FakeBin(bindir)
 
 
+@dataclass
+class FakeTrash:
+    """Stands in for the desktop trash: moves files into a folder of its own.
+
+    The real one must stay out of reach. GLib finds `~/.local/share/Trash`
+    through its own idea of the home directory, which `fake_home` does not
+    move, so a gui test calling `Gio.File.trash` would fill the developer's
+    actual Trash.
+    """
+
+    folder: Path
+    #: Names to refuse, or every name when `refuse_all` is set.
+    refuse: set[str] = field(default_factory=set)
+    refuse_all: bool = False
+
+    def __call__(self, path: Path) -> None:
+        if self.refuse_all or path.name in self.refuse:
+            raise OSError(f"the trash refused {path.name}")
+        path.rename(self.folder / path.name)
+
+    @property
+    def names(self) -> list[str]:
+        return sorted(item.name for item in self.folder.iterdir())
+
+
+@pytest.fixture
+def trash(tmp_path: Path) -> FakeTrash:
+    folder = tmp_path / "trash"
+    folder.mkdir()
+    return FakeTrash(folder)
+
+
 #: Everything GTK logged since the capture was installed. GTK reports real
 #: bugs — failed markup, missing icons, broken widget trees — on stderr and
 #: then carries on, so without this a gui test passes while the interface is
@@ -204,14 +236,16 @@ def _install_log_capture() -> None:
 
 
 @pytest.fixture
-def gtk():
+def gtk(monkeypatch: pytest.MonkeyPatch, trash: FakeTrash):
     """The GTK namespaces, or a clean skip when the typelibs are missing.
 
     Skips rather than fails: `make test` must stay green on a machine with no
     display and no GObject introspection data, which is the normal state of a
     minimal CI container before the gir packages land.
 
-    Also fails the test if GTK complained while it ran. See `GTK_LOG`.
+    Also fails the test if GTK complained while it ran. See `GTK_LOG`. And
+    swaps the desktop trash for `FakeTrash`, since every gui test comes
+    through here.
     """
     gi = pytest.importorskip("gi", reason="PyGObject is not installed")
     try:
@@ -223,6 +257,7 @@ def gtk():
     if not Gtk.init_check():
         pytest.skip("no display available; run under xvfb-run")
     Adw.init()
+    monkeypatch.setattr("parvussh.ui.trash.to_trash", trash)
 
     _install_log_capture()
     GTK_LOG.clear()

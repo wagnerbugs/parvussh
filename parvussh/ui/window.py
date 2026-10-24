@@ -9,6 +9,7 @@ the words.
 from __future__ import annotations
 
 import threading
+from pathlib import Path
 
 import gi
 
@@ -24,6 +25,7 @@ from parvussh.core.models import WILDCARD_CHARS, Block  # noqa: E402
 from parvussh.core.store import ConfigSet  # noqa: E402
 from parvussh.core.writer import ConfigError  # noqa: E402
 from parvussh.i18n import t  # noqa: E402
+from parvussh.ui import trash  # noqa: E402
 from parvussh.ui.dialogs import TestResultDialog  # noqa: E402
 from parvussh.ui.editor import Editor  # noqa: E402
 from parvussh.ui.help import HelpDialog  # noqa: E402
@@ -219,7 +221,19 @@ class ParvuSshWindow(Adw.ApplicationWindow):
                 if written
                 else t("save.nothing_changed")
             )
+        self.prune_backups(written)
         return True
+
+    def prune_backups(self, written: list[Path]) -> None:
+        """Keep the newest copies of each file just written; trash the rest.
+
+        The save has already happened. A trash that refuses is said in a toast
+        of its own, after the one confirming the save, and never as a failure
+        of the edit.
+        """
+        left = trash.prune(written, settings.load().backups)
+        if left:
+            self.toast(t("backups.left", folder=shorten_home(left[0].parent)))
 
     def test_current(self) -> None:
         """Try to connect using the form as it stands, without saving first."""
@@ -356,7 +370,7 @@ class ParvuSshWindow(Adw.ApplicationWindow):
             return
         self.config.remove(block)
         try:
-            self.config.save()
+            written = self.config.save()
         except ConfigConflict as conflict:
             self.report_conflict(conflict)
             return
@@ -368,6 +382,7 @@ class ParvuSshWindow(Adw.ApplicationWindow):
         self.refresh_list()
         self._show_block(None)
         self.toast(t("delete.done"))
+        self.prune_backups(written)
 
     def report_conflict(self, conflict: ConfigConflict) -> None:
         """Another program changed what the user edited: say so, then reload.

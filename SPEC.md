@@ -129,7 +129,32 @@ catch up                    read the file again; if its sha256 differs from
                             failed copy raises and nothing is written
   → atomic write            mkstemp in the same dir, chmod 600, os.replace
   → reset state             every block: raw = render(), dirty = False
+then, in the UI, once the save has succeeded:
+  → prune                   per written file, keep the newest N copies (the
+                            preference, default 3, minimum 1); the rest go to
+                            the trash. A refusal is logged and toasted; the
+                            save stands
 ```
+
+**The backup family.** A file's copies are the regular files in its own
+directory whose whole name matches this, with ASCII digits only (Python's
+`\d` also takes other scripts' digits; use `re.ASCII`) and against the whole
+name (`fullmatch`: in Python `$` also accepts a trailing newline):
+
+```
+^<re.escape(name)>\.bak-(\d{8}-\d{6})(?:-(\d+))?$
+```
+
+Anything else is never touched — the file itself, `known_hosts.old`, a copy
+named by hand (`config.bak-2026-10-12`, `config.bak-20261015-pcd1310`), and a
+directory or symlink under a matching name. Newest is by the name, never by
+mtime: sort by the date group, then the number as an integer (`-10` after
+`-2`, none counts as 1), then the whole name. Other programs that edit the
+same file keep their copies under this pattern and prune by this order, so
+both must stay exactly as written here. Copies go to the trash
+(`Gio.File.trash`, which uses the trash portal inside a Flatpak), never to
+deletion. `core/backups.py` takes the trash as an argument, since `core`
+imports no GTK.
 
 Only files with at least one dirty block, or a structural change (host added,
 removed or duplicated), are rewritten. `ConfigSet.save()` returns the list of

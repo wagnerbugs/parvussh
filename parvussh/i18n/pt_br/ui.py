@@ -97,6 +97,10 @@ STRINGS: dict[str, str] = {
         "então nada foi gravado. A lista foi recarregada com o {path} como "
         "está agora: confira e repita a sua edição."
     ),
+    "backups.left": (
+        "As cópias antigas continuam em {folder}, porque a Lixeira as recusou. "
+        "O aplicativo tenta de novo no próximo salvamento."
+    ),
     "unsaved.heading": "Alterações não salvas",
     "unsaved.body": ("“{alias}” tem mudanças que ainda não foram gravadas no arquivo."),
     "unsaved.discard": "Descartar",

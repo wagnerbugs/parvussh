@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from parvussh.core import settings
 from parvussh.i18n import t
 
 pytestmark = pytest.mark.gui
@@ -277,6 +278,82 @@ def test_a_conflict_on_delete_keeps_the_connection(
         t("conflict.heading", path="~/.ssh/config")
     ]
     assert app.hosts[0].title == "vps-blog"
+
+
+# -- old copies to the trash --------------------------------------------------
+
+OLD_COPIES = [
+    "config.bak-20261012-100855",
+    "config.bak-20261015-142125",
+    "config.bak-20261024-124225",
+]
+
+
+@pytest.fixture
+def said(app, monkeypatch) -> list[str]:
+    texts: list[str] = []
+    monkeypatch.setattr(app, "toast", texts.append)
+    return texts
+
+
+def copies(config_file: Path) -> list[str]:
+    return sorted(path.name for path in config_file.parent.glob("config.bak-*"))
+
+
+def test_saving_keeps_the_newest_three_copies(
+    app, config_file: Path, trash, said
+) -> None:
+    for name in OLD_COPIES:
+        (config_file.parent / name).write_text(name)
+    app.editor.hostname.set_text("203.0.113.99")
+
+    app.save_current()
+
+    assert trash.names == ["config.bak-20261012-100855"]
+    assert len(copies(config_file)) == 3
+    assert said == [t("save.done", path="~/.ssh/config")]
+
+
+def test_the_number_of_copies_follows_the_preference(
+    app, config_file: Path, trash
+) -> None:
+    settings.save(settings.Settings(backups=1))
+    for name in OLD_COPIES:
+        (config_file.parent / name).write_text(name)
+    app.editor.hostname.set_text("203.0.113.99")
+
+    app.save_current()
+
+    assert trash.names == OLD_COPIES
+    assert len(copies(config_file)) == 1
+
+
+def test_a_trash_that_refuses_does_not_undo_the_save(
+    app, config_file: Path, trash, said
+) -> None:
+    for name in OLD_COPIES:
+        (config_file.parent / name).write_text(name)
+    trash.refuse_all = True
+    app.editor.hostname.set_text("203.0.113.99")
+
+    assert app.save_current() is True
+
+    assert "HostName 203.0.113.99" in config_file.read_text()
+    assert app.editor.dirty is False
+    assert len(copies(config_file)) == 4  # nothing deleted on the way
+    assert said == [
+        t("save.done", path="~/.ssh/config"),
+        t("backups.left", folder="~/.ssh"),
+    ]
+
+
+def test_deleting_prunes_the_copies_too(app, config_file: Path, trash) -> None:
+    for name in OLD_COPIES:
+        (config_file.parent / name).write_text(name)
+
+    app.remove_block(app.hosts[0])
+
+    assert trash.names == ["config.bak-20261012-100855"]
 
 
 # -- new connections -------------------------------------------------------
