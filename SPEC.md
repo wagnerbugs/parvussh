@@ -547,6 +547,19 @@ On `ConfigConflict`, show "O {path} mudou desde que foi aberto" / "Outro
 programa alterou o arquivo no mesmo trecho que você editou, então nada foi
 gravado. …", then reload. Deleting a connection takes the same path.
 
+### Following the file — `ui/watch.py`
+
+Every loaded file is watched with `Gio.File.monitor_file` (a monitor watches
+the name in its directory, so it survives a rename over the file). Events are
+gathered until 300 ms pass without another, then the window asks
+`ConfigSet.stale()` whether any file holds other bytes than were last read or
+written. Our own saves update that hash, so they never reload. When stale and
+nothing is unsaved — neither the form nor the set — the window reloads and
+keeps the open connection open, found again by its alias. With an edit
+pending it does nothing: the save catches up on its own. A file that cannot
+be read at that moment is not counted, since reloading would recreate it
+empty while another program is replacing it.
+
 ### Connecting — `Acessar`
 
 Opens the user's own terminal on `ssh <alias>` (`core/terminal.py`). Unlike

@@ -101,6 +101,28 @@ class ConfigSet:
         return [b for f in self.files for b in f.blocks if b.kind == HOST]
 
     @property
+    def dirty(self) -> bool:
+        """Whether any loaded file holds an edit that is not on disk yet."""
+        return any(config.dirty for config in self.files)
+
+    def stale(self) -> bool:
+        """Whether a loaded file now holds other bytes than we last read or wrote.
+
+        Our own saves update what we compare against, so only another
+        program's write makes this true. A file that cannot be read right now
+        is not counted: it may be halfway through that program's write, and
+        reloading then would recreate it empty.
+        """
+        for config in self.files:
+            try:
+                data = config.path.read_bytes()
+            except OSError:
+                continue
+            if _digest(data) != config.digest:
+                return True
+        return False
+
+    @property
     def main_file(self) -> ConfigFile:
         for config in self.files:
             if config.path == self.main:

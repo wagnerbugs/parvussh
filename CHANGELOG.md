@@ -15,6 +15,10 @@ format. Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   trash refuses, the save still stands and a toast says the old copies stayed.
   The number is set in Preferences, under **Cópias de segurança**, and is
   never less than one.
+- The connection list follows the file. When another program writes
+  `~/.ssh/config` or a file it includes, and nothing is waiting to be saved,
+  the list reloads by itself and the connection on screen stays open. An
+  unsaved edit is never dropped for this; the save replays it on top.
 - **Acessar** opens your own terminal on `ssh <alias>`, reading the saved
   `~/.ssh/config`. The terminal is `xdg-terminal-exec` when installed — the
   one the desktop says you chose — and otherwise the first of Ptyxis, GNOME

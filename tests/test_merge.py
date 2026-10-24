@@ -388,3 +388,37 @@ def test_an_edit_survives_two_rebases_in_a_row(
     assert [block.title for block in reread.hosts] == ["web", "db", "new-vps"]
     assert host(reread, "db").get("User") == "admin"
     assert host(reread, "web").get("Port") == "1310"
+
+
+# -- noticing the change before a save -------------------------------------
+
+
+def test_a_freshly_loaded_set_is_not_stale(loaded: ConfigSet) -> None:
+    assert loaded.stale() is False
+
+
+def test_a_write_from_elsewhere_makes_it_stale(loaded: ConfigSet, config: Path) -> None:
+    config.write_text(ORIGINAL.replace("Port 22", "Port 1310"), encoding="utf-8")
+    assert loaded.stale() is True
+
+
+def test_our_own_save_does_not_make_it_stale(loaded: ConfigSet) -> None:
+    edit(loaded, "db", User="admin")
+    loaded.save()
+    assert loaded.stale() is False
+
+
+def test_a_file_that_cannot_be_read_right_now_is_not_counted(
+    loaded: ConfigSet, config: Path
+) -> None:
+    """Reloading a file another program is replacing would recreate it empty."""
+    config.unlink()
+    assert loaded.stale() is False
+
+
+def test_the_set_is_dirty_while_an_edit_is_unsaved(loaded: ConfigSet) -> None:
+    assert loaded.dirty is False
+    edit(loaded, "db", User="admin")
+    assert loaded.dirty is True
+    loaded.save()
+    assert loaded.dirty is False

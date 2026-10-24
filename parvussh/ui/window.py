@@ -32,6 +32,7 @@ from parvussh.ui.help import HelpDialog  # noqa: E402
 from parvussh.ui.paths import shorten_home  # noqa: E402
 from parvussh.ui.preferences import PreferencesDialog  # noqa: E402
 from parvussh.ui.sidebar import Sidebar  # noqa: E402
+from parvussh.ui.watch import ConfigWatch  # noqa: E402
 
 WINDOW_SIZE = (1020, 700)
 SIDEBAR_WIDTH = (280, 360)
@@ -77,6 +78,7 @@ class ParvuSshWindow(Adw.ApplicationWindow):
         self.split.set_sidebar(self.sidebar)
         self.split.set_content(self.editor)
 
+        self.watch = ConfigWatch(self.on_disk_change)
         self._install_actions()
         self.reload()
 
@@ -106,16 +108,35 @@ class ParvuSshWindow(Adw.ApplicationWindow):
 
     # -- loading -----------------------------------------------------------
 
-    def reload(self) -> None:
-        """Re-read `~/.ssh/config` from disk, dropping any unsaved edit."""
+    def reload(self, keep_open: bool = False) -> None:
+        """Re-read `~/.ssh/config` from disk, dropping any unsaved edit.
+
+        With `keep_open`, the connection on screen stays on screen, found
+        again by its alias in what was read.
+        """
+        alias = self.current.title if keep_open and self.current else None
         try:
             self.config = ConfigSet.load()
         except OSError as error:
             self.show_message(t("error.read_config"), str(error))
             return
+        found = next((b for b in self.config.hosts if b.title == alias), None)
         self.current = None
-        self.sidebar.set_blocks(self.config.hosts)
-        self._show_block(None)
+        self.sidebar.set_blocks(self.config.hosts, select=found)
+        self._show_block(found)
+        self.watch.follow([config.path for config in self.config.files])
+
+    def on_disk_change(self) -> None:
+        """Another program wrote a loaded file: show it, unless an edit waits.
+
+        An edit on the form is never dropped for this. The list stays as it
+        is, and the save reads the file again and replays the edit on top.
+        """
+        if self.config is None or not self.config.stale():
+            return  # our own save, or a write that changed nothing
+        if self.editor.dirty or self.config.dirty:
+            return
+        self.reload(keep_open=True)
 
     def refresh_list(self, select: Block | None = None) -> None:
         """Rebuild the sidebar from the config in memory, keeping a selection."""
