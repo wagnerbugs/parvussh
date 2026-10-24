@@ -72,8 +72,10 @@ teste automatizado que falha se for quebrado.
 3. **Opções desconhecidas sobrevivem.** Uma opção que não está no nosso
    catálogo vira um campo de texto comum. Nunca é descartada por ser
    desconhecida.
-4. **Backup antes de cada gravação**, em `<config>.bak-AAAAMMDD-HHMMSS`. O
-   aplicativo nunca apaga esses backups.
+4. **Backup antes de cada gravação**, em `<config>.bak-AAAAMMDD-HHMMSS`, com
+   permissão 600 (`-2`, `-3` se duas gravações caírem no mesmo segundo). Uma
+   cópia que já existe nunca é sobrescrita, e se a cópia falhar, nada é
+   gravado. O aplicativo nunca apaga esses backups.
 5. **Validação antes de gravar.** O conteúdo vai para um arquivo temporário e
    passa por `ssh -G`. Se o ssh recusar, **nada** é gravado e a mensagem dele
    aparece para você.

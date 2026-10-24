@@ -122,7 +122,11 @@ catch up                    read the file again; if its sha256 differs from
       non-zero exit         → raise ConfigError(stderr, with the temp path
                               replaced by "config"); nothing is written
       ssh not installed     → skip validation, proceed
-  → backup                  copy2 to <path>.bak-YYYYMMDD-HHMMSS
+  → backup                  backups.create: <path>.bak-YYYYMMDD-HHMMSS, local
+                            time; -2, -3 … within one second. O_EXCL, so a
+                            name another program holds is never overwritten;
+                            exact bytes, mode 0600, original mtime kept. A
+                            failed copy raises and nothing is written
   → atomic write            mkstemp in the same dir, chmod 600, os.replace
   → reset state             every block: raw = render(), dirty = False
 ```

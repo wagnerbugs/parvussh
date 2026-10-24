@@ -8,13 +8,11 @@ always has a dated copy beside it.
 from __future__ import annotations
 
 import os
-import shutil
 import subprocess
 import tempfile
-import time
 from pathlib import Path
 
-from parvussh.core import host
+from parvussh.core import backups, host
 
 # A name that cannot resolve: we want ssh to parse the file, not connect.
 VALIDATION_HOST = "parvussh-validation.invalid"
@@ -22,7 +20,6 @@ VALIDATION_TIMEOUT = 10
 
 CONFIG_MODE = 0o600
 SSH_DIR_MODE = 0o700
-BACKUP_STAMP = "%Y%m%d-%H%M%S"
 
 
 class ConfigError(Exception):
@@ -70,21 +67,6 @@ def validate(text: str) -> None:
             raise ConfigError(message.replace(tmp, "config"))
 
 
-def backup_path(path: Path) -> Path:
-    """A free `<name>.bak-YYYYMMDD-HHMMSS`, counting up within the same second.
-
-    Two saves inside one second must not leave the user with one backup: the
-    second would overwrite the copy of the state they may want back.
-    """
-    stamp = time.strftime(BACKUP_STAMP)
-    candidate = path.with_name(f"{path.name}.bak-{stamp}")
-    attempt = 2
-    while candidate.exists():
-        candidate = path.with_name(f"{path.name}.bak-{stamp}-{attempt}")
-        attempt += 1
-    return candidate
-
-
 def write_atomic(path: Path, text: str) -> Path | None:
     """Back the file up, then replace it in one step. Returns the backup path.
 
@@ -92,10 +74,8 @@ def write_atomic(path: Path, text: str) -> Path | None:
     a rename within one filesystem — either the old file or the new one is
     there, never a half-written mixture.
     """
-    backup = None
-    if path.exists():
-        backup = backup_path(path)
-        shutil.copy2(path, backup)
+    # A copy that fails raises here, before anything is written.
+    backup = backups.create(path) if path.exists() else None
 
     handle, tmp = tempfile.mkstemp(dir=str(path.parent), prefix=".parvussh-")
     try:

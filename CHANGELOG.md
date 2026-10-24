@@ -38,6 +38,12 @@ format. Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
 
+- Backups are always `0600`. They were made with `copy2`, which copies the
+  config's own permissions, so a config readable by others left behind copies
+  readable by others too. They are now created with `O_EXCL` as well: another
+  program writing the same file names its copies the same way, and checking
+  for a free name before copying left a gap in which one copy could overwrite
+  the other.
 - `make setup` no longer installs system packages and no longer calls `sudo`.
   It assumed `apt`, which made it fail on the first line on any distribution
   that does not have it. It now checks the machine and creates the venv; the

@@ -12,7 +12,6 @@ import pytest
 from parvussh.core.writer import (
     CONFIG_MODE,
     ConfigError,
-    backup_path,
     ensure_exists,
     validate,
     write_atomic,
@@ -145,11 +144,21 @@ def test_two_saves_in_the_same_second_keep_both_backups(config: Path) -> None:
     assert second.read_text() == REPLACEMENT
 
 
-def test_backup_path_counts_up_past_an_existing_name(config: Path) -> None:
-    taken = backup_path(config)
-    taken.touch()
-    assert backup_path(config).name.startswith(taken.name)
-    assert backup_path(config) != taken
+def test_a_failed_backup_writes_nothing(
+    config: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """No copy, no write: the copy is what makes the write safe to undo."""
+
+    def refuse(*_args: object, **_kwargs: object) -> None:
+        raise PermissionError("no")
+
+    monkeypatch.setattr("parvussh.core.backups.os.utime", refuse)
+
+    with pytest.raises(PermissionError):
+        write_atomic(config, REPLACEMENT)
+
+    assert config.read_text() == ORIGINAL
+    assert sorted(path.name for path in config.parent.iterdir()) == ["config"]
 
 
 def test_a_brand_new_file_gets_no_backup(fake_home: Path) -> None:
