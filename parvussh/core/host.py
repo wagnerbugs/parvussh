@@ -62,10 +62,10 @@ def command(argv: Sequence[str]) -> list[str]:
 def spawn_failed(returncode: int) -> bool:
     """Whether the portal refused, rather than the command having answered.
 
-    Measured on flatpak 1.16.6 against `org.gnome.Platform//50`: with no such
-    binary on the host, `flatpak-spawn` exits 1 and says `Portal call failed`
-    on stderr; otherwise it forwards the child's own status untouched — 42
-    comes back 42 and 255 comes back 255.
+    Measured on flatpak 1.16.6 against `org.gnome.Platform` 50, and again on
+    51: with no such binary on the host, `flatpak-spawn` exits 1 and says
+    `Portal call failed` on stderr; otherwise it forwards the child's own
+    status untouched — 42 comes back 42 and 255 comes back 255.
 
     That leaves 1 to mean one thing, because the real `ssh` never returns it
     in either shape we run. `ssh -F … -G host` exits 0 or 255 — a bad option,

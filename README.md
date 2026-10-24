@@ -152,7 +152,7 @@ próprio GTK, então a versão que a sua distribuição tem deixa de importar.
 ```bash
 flatpak remote-add --if-not-exists --user flathub \
     https://dl.flathub.org/repo/flathub.flatpakrepo
-flatpak install --user flathub org.gnome.Platform//50 org.gnome.Sdk//50
+flatpak install --user flathub org.gnome.Platform//51 org.gnome.Sdk//51
 make flatpak
 ```
 
