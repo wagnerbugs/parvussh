@@ -584,7 +584,7 @@ found → a dialog listing the names above and suggesting `ssh <alias>` by hand.
 
 ### Preferences
 
-`Adw.PreferencesDialog`, opened from the sidebar menu or `Ctrl+,`. One group,
+`Adw.PreferencesDialog`, opened from the sidebar menu or `Ctrl+,`. Two groups.
 **Terminal**, with two rows:
 
 - `Comando do terminal` — an `Adw.EntryRow` with an apply button. Empty means
@@ -601,8 +601,15 @@ found → a dialog listing the names above and suggesting `ssh <alias>` by hand.
 A chosen terminal that is not installed is reported, never replaced by the
 table: "O terminal escolhido não foi encontrado".
 
+**Cópias de segurança**, with one row: `Cópias do ~/.ssh/config a guardar`, an
+`Adw.SpinRow` from 1 to 99, default 3. Saved as soon as it changes, with no
+toast; opening the dialog writes nothing. The number applies to every file the
+app writes, `Include` targets too (see §3, the backup family).
+
 Stored in `$XDG_CONFIG_HOME/parvussh/settings.ini` (`~/.config/…` by default),
-section `[terminal]`, key `command`, written atomically. A file that cannot be
+section `[terminal]`, key `command`, and section `[backups]`, key `keep`,
+written atomically. A `keep` below 1 reads as 1, and one that is not a number
+as 3. A file that cannot be
 parsed reads as the defaults. It is the only file the app keeps of its own,
 and it holds no connection.
 

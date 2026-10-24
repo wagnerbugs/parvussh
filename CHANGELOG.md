@@ -13,6 +13,8 @@ format. Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   `<file>.bak-YYYYMMDD-HHMMSS`, optionally followed by `-2`, `-3` …, are
   counted: a copy made by hand under any other name is never touched. If the
   trash refuses, the save still stands and a toast says the old copies stayed.
+  The number is set in Preferences, under **Cópias de segurança**, and is
+  never less than one.
 - **Acessar** opens your own terminal on `ssh <alias>`, reading the saved
   `~/.ssh/config`. The terminal is `xdg-terminal-exec` when installed — the
   one the desktop says you chose — and otherwise the first of Ptyxis, GNOME

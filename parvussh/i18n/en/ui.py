@@ -253,6 +253,14 @@ STRINGS: dict[str, str] = {
     "prefs.terminal.none": (
         "No known terminal is installed. Write the path to yours above."
     ),
+    "prefs.backups.title": "Backups",
+    "prefs.backups.description": (
+        "Before every write, the app leaves a copy beside the file, such as "
+        "config.bak-20261024-131455. The newest stay; older ones go to the "
+        "trash. This also applies to files pulled in by Include. Copies other "
+        "programs make under the same name pattern count together with these."
+    ),
+    "prefs.backups.keep": "Copies of ~/.ssh/config to keep",
     "prefs.error.save": "The preference was not written to {path}: {detail}",
     # -- option rows ------------------------------------------------------
     "rows.remove_tooltip": "Remove {name}",

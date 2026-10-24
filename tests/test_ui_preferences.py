@@ -89,3 +89,45 @@ def test_nothing_installed_and_nothing_chosen(dialog, pump) -> None:
 
 def test_the_window_opens_it_without_a_selection(window) -> None:
     assert window.lookup_action("preferences").get_enabled() is True
+
+
+# -- how many config copies to keep -----------------------------------------
+
+
+def test_the_copies_row_starts_with_what_was_saved(gtk, fake_bin) -> None:
+    from parvussh.ui.preferences import PreferencesDialog
+
+    settings.save(Settings(backups=7))
+    assert PreferencesDialog().backups.get_value() == 7
+
+
+def test_the_copies_row_starts_at_three(dialog) -> None:
+    assert dialog.backups.get_value() == 3
+
+
+def test_opening_the_dialog_writes_nothing(dialog) -> None:
+    assert not settings.path().exists()
+
+
+def test_changing_the_copies_saves_them_and_keeps_the_terminal(gtk, fake_bin) -> None:
+    from parvussh.ui.preferences import PreferencesDialog
+
+    settings.save(Settings(terminal="xterm"))
+    dialog = PreferencesDialog()
+
+    dialog.backups.set_value(5)
+
+    assert settings.load() == Settings(terminal="xterm", backups=5)
+
+
+def test_fewer_than_one_copy_cannot_be_chosen(dialog) -> None:
+    dialog.backups.set_value(0)
+
+    assert dialog.backups.get_value() == 1
+    assert settings.load().backups == 1
+
+
+def test_applying_the_terminal_keeps_the_copies(dialog, pump) -> None:
+    dialog.backups.set_value(6)
+    reapplied(dialog, pump, "alacritty -e")
+    assert settings.load() == Settings(terminal="alacritty -e", backups=6)

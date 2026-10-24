@@ -75,9 +75,9 @@ teste automatizado que falha se for quebrado.
 4. **Backup antes de cada gravação**, em `<config>.bak-AAAAMMDD-HHMMSS`, com
    permissão 600 (`-2`, `-3` se duas gravações caírem no mesmo segundo). Uma
    cópia que já existe nunca é sobrescrita, e se a cópia falhar, nada é
-   gravado. Ficam as 3 cópias mais novas — mais nova pela data no nome — e as
-   mais velhas vão para a **Lixeira**, de onde dá para restaurar. Nenhuma
-   cópia é apagada direto.
+   gravado. Ficam as 3 cópias mais novas — mais nova pela data no nome; o
+   número muda em Preferências — e as mais velhas vão para a **Lixeira**, de
+   onde dá para restaurar. Nenhuma cópia é apagada direto.
 5. **Validação antes de gravar.** O conteúdo vai para um arquivo temporário e
    passa por `ssh -G`. Se o ssh recusar, **nada** é gravado e a mensagem dele
    aparece para você.
@@ -408,8 +408,9 @@ terminal, no `scp`, no `rsync` e no Git, porque nunca deixaram de morar onde
 sempre moraram.
 
 O único arquivo que o aplicativo guarda para si é
-`~/.config/parvussh/settings.ini`, com o terminal escolhido em Preferências.
-Nenhuma conexão mora nele; apagá-lo só devolve o terminal padrão do sistema.
+`~/.config/parvussh/settings.ini`, com o terminal escolhido em Preferências e
+quantas cópias do config guardar. Nenhuma conexão mora nele; apagá-lo só
+devolve o terminal padrão do sistema e as 3 cópias.
 
 Isso é o oposto de um gerenciador que importa suas conexões para um banco
 próprio. Aquele modelo pede confiança e cobra dependência. Este pede confiança

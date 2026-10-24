@@ -242,6 +242,15 @@ STRINGS: dict[str, str] = {
     "prefs.terminal.none": (
         "Nenhum terminal conhecido está instalado. Escreva acima o caminho do seu."
     ),
+    "prefs.backups.title": "Cópias de segurança",
+    "prefs.backups.description": (
+        "Antes de cada gravação, o aplicativo deixa uma cópia ao lado do "
+        "arquivo, como config.bak-20261024-131455. Ficam as mais novas; as mais "
+        "velhas vão para a Lixeira. Vale também para os arquivos trazidos por "
+        "Include. Cópias com o mesmo padrão de nome, feitas por outros "
+        "programas, contam juntas."
+    ),
+    "prefs.backups.keep": "Cópias do ~/.ssh/config a guardar",
     "prefs.error.save": "A preferência não foi gravada em {path}: {detail}",
     # -- option rows ------------------------------------------------------
     "rows.remove_tooltip": "Remover {name}",

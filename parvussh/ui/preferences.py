@@ -1,4 +1,4 @@
-"""The preferences dialog. One setting so far: the terminal Acessar opens."""
+"""The preferences dialog: the terminal Acessar opens, and how many backups stay."""
 
 from __future__ import annotations
 
@@ -10,12 +10,16 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Adw, GLib  # noqa: E402
+from gi.repository import Adw, GLib, Gtk  # noqa: E402
 
 from parvussh.core import settings, terminal  # noqa: E402
 from parvussh.i18n import t  # noqa: E402
 from parvussh.ui.markup import group, text_row  # noqa: E402
 from parvussh.ui.paths import shorten_home  # noqa: E402
+
+#: Bounds of the backups row. One, because a write must always leave a copy
+#: of what it replaced; the top is only there because a spin row needs one.
+BACKUPS_RANGE = (1, 99)
 
 #: What the "Em uso" row says for each answer `terminal.choose()` can give.
 IN_USE = {
@@ -27,7 +31,7 @@ IN_USE = {
 
 
 class PreferencesDialog(Adw.PreferencesDialog):
-    """Choose the terminal, and see which one would open right now."""
+    """Choose the terminal and see which one would open; set how many copies stay."""
 
     def __init__(self) -> None:
         super().__init__(title=t("prefs.title"))
@@ -59,8 +63,42 @@ class PreferencesDialog(Adw.PreferencesDialog):
 
         page = Adw.PreferencesPage()
         page.add(section)
+        page.add(self._backups_section())
         self.add(page)
         self.refresh()
+
+    def _backups_section(self) -> Adw.PreferencesGroup:
+        lower, upper = BACKUPS_RANGE
+        self.backups = text_row(
+            Adw.SpinRow,
+            title=t("prefs.backups.keep"),
+            adjustment=Gtk.Adjustment(
+                lower=lower, upper=upper, step_increment=1, page_increment=5
+            ),
+        )
+        # Set before connecting: opening the dialog must not write the file.
+        self.backups.set_value(settings.load().backups)
+        self.backups.connect("notify::value", lambda *_a: self.apply_backups())
+
+        section = group(
+            title=t("prefs.backups.title"),
+            description=t("prefs.backups.description"),
+        )
+        section.add(self.backups)
+        return section
+
+    def apply_backups(self) -> None:
+        """Save the number as soon as it changes, as a spin row is expected to.
+
+        No toast on success: a click on the arrows would raise one each time.
+        """
+        target = settings.path()
+        count = int(self.backups.get_value())
+        try:
+            settings.save(replace(settings.load(), backups=count))
+        except OSError as error:
+            message = t("prefs.error.save", path=shorten_home(target), detail=error)
+            self.add_toast(Adw.Toast(title=message))
 
     def apply(self) -> None:
         """Save the field as it stands, then look again at what it opens."""
