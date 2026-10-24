@@ -19,6 +19,7 @@ from gi.repository import Adw, Gio, GLib  # noqa: E402
 
 from parvussh import APP_NAME  # noqa: E402
 from parvussh.core import settings, terminal, tester  # noqa: E402
+from parvussh.core.merge import ConfigConflict  # noqa: E402
 from parvussh.core.models import WILDCARD_CHARS, Block  # noqa: E402
 from parvussh.core.store import ConfigSet  # noqa: E402
 from parvussh.core.writer import ConfigError  # noqa: E402
@@ -197,6 +198,9 @@ class ParvuSshWindow(Adw.ApplicationWindow):
 
         try:
             written = self.config.save()
+        except ConfigConflict as conflict:
+            self.report_conflict(conflict)
+            return False
         except ConfigError as error:
             self.show_message(
                 t("save.failed.heading"),
@@ -353,6 +357,9 @@ class ParvuSshWindow(Adw.ApplicationWindow):
         self.config.remove(block)
         try:
             self.config.save()
+        except ConfigConflict as conflict:
+            self.report_conflict(conflict)
+            return
         except (ConfigError, OSError) as error:
             self.show_message(t("save.failed.heading"), str(error))
             self.reload()  # the in-memory set no longer matches the file
@@ -361,6 +368,20 @@ class ParvuSshWindow(Adw.ApplicationWindow):
         self.refresh_list()
         self._show_block(None)
         self.toast(t("delete.done"))
+
+    def report_conflict(self, conflict: ConfigConflict) -> None:
+        """Another program changed what the user edited: say so, then reload.
+
+        Showing the form again over the old file would only lead to the same
+        refusal on the next save. The edit is gone with the reload, which is
+        why the message asks for it to be made again.
+        """
+        path = shorten_home(conflict.path) if conflict.path else ""
+        self.show_message(
+            t("conflict.heading", path=path), t("conflict.body", path=path)
+        )
+        self.editor.mark_clean()
+        self.reload()
 
     # -- talking to the user ----------------------------------------------
 

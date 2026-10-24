@@ -10,6 +10,8 @@ from pathlib import Path
 
 import pytest
 
+from parvussh.i18n import t
+
 pytestmark = pytest.mark.gui
 
 CONFIG = """# não mexer sem café
@@ -214,6 +216,67 @@ def test_ssh_refusing_the_config_leaves_the_file_alone(
     assert app.save_current() is False
     assert config_file.read_bytes() == before
     assert list(config_file.parent.glob("config.bak-*")) == []
+
+
+# -- another program writing the same file ---------------------------------
+
+
+@pytest.fixture
+def shown(app, monkeypatch) -> list[tuple[str, str]]:
+    """Every message dialog, as (heading, body), instead of presenting it."""
+    messages: list[tuple[str, str]] = []
+    monkeypatch.setattr(app, "show_message", lambda *texts: messages.append(texts))
+    return messages
+
+
+def test_saving_keeps_a_change_another_program_made(app, config_file: Path) -> None:
+    config_file.write_text(CONFIG.replace("Interval 60", "Interval 30"))
+    app.editor.hostname.set_text("203.0.113.99")
+
+    assert app.save_current() is True
+
+    text = config_file.read_text()
+    assert "HostName 203.0.113.99" in text
+    assert "ServerAliveInterval 30" in text
+    assert app.sidebar.listbox.get_selected_row().block is app.current
+
+
+def test_a_conflict_writes_nothing_says_so_and_reloads(
+    app, config_file: Path, shown
+) -> None:
+    changed = CONFIG.replace("Port 2222", "Port 1310")
+    config_file.write_text(changed)
+    app.editor.hostname.set_text("203.0.113.99")
+
+    assert app.save_current() is False
+
+    assert config_file.read_text() == changed
+    assert list(config_file.parent.glob("config.bak-*")) == []
+    assert shown == [
+        (
+            t("conflict.heading", path="~/.ssh/config"),
+            t("conflict.body", path="~/.ssh/config"),
+        )
+    ]
+    # The form would only be refused again; the list shows the file as it is.
+    assert app.current is None
+    assert app.editor.dirty is False
+    assert app.hosts[0].get("Port") == "1310"
+
+
+def test_a_conflict_on_delete_keeps_the_connection(
+    app, config_file: Path, shown
+) -> None:
+    changed = CONFIG.replace("Port 2222", "Port 1310")
+    config_file.write_text(changed)
+
+    app.remove_block(app.hosts[0])
+
+    assert config_file.read_text() == changed
+    assert [heading for heading, _ in shown] == [
+        t("conflict.heading", path="~/.ssh/config")
+    ]
+    assert app.hosts[0].title == "vps-blog"
 
 
 # -- new connections -------------------------------------------------------

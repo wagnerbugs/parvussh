@@ -87,6 +87,12 @@ STRINGS: dict[str, str] = {
     "save.failed.body": (
         "ssh refused the configuration, so nothing on disk was changed."
     ),
+    "conflict.heading": "{path} changed since it was opened",
+    "conflict.body": (
+        "Another program changed the file in the same place you edited, so "
+        "nothing was written. The list now shows {path} as it is on disk: "
+        "check it and make your edit again."
+    ),
     "unsaved.heading": "Unsaved changes",
     "unsaved.body": "“{alias}” has changes that are not in the file yet.",
     "unsaved.discard": "Discard",

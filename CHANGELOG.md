@@ -89,6 +89,13 @@ format. Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
+- Saving no longer undoes a change another program made to the file while
+  the app was open. The loaded copy of every block used to be written back
+  as it was read, so a script that moved a server to `Port 1310` lost that
+  change the next time any connection was saved. The file is now read again
+  before each save and, when it changed, the edit is replayed on top of it.
+  When both touched the same connection, nothing is written and the app asks
+  for the edit again over the file as it is now.
 - The guide's markup was only ever checked in Portuguese: both tests read the
   sections through the active locale, and the suite never left `pt_br`. They
   now walk every shipped language, so an unclosed `<tt>` in the English guide

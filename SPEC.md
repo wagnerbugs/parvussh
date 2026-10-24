@@ -115,7 +115,9 @@ loaded and preserved but are read-only in the UI for v1.
 ## 3. Writing
 
 ```
-render all blocks
+catch up                    read the file again; if its sha256 differs from
+                            what was loaded, replay the edit onto it (below)
+  → render all blocks
   → validate(text)          ssh -F <temp> -G parvussh-validation.invalid
       non-zero exit         → raise ConfigError(stderr, with the temp path
                               replaced by "config"); nothing is written
@@ -131,6 +133,30 @@ paths it actually wrote.
 
 If `~/.ssh/config` does not exist at startup, create `~/.ssh` with mode `700`
 and an empty `config` with mode `600`.
+
+### Another program wrote the file — `core/merge.py`
+
+Other programs edit the same file while the app is open: a provisioning
+script changing a server's `Port`, or the user in a text editor. Writing the
+loaded copy back would undo their change, so before rendering, each dirty
+file is read again and compared by sha256. If it changed, the edit is
+replayed onto the new content, block by block, each block found by the lines
+it had when loaded (trailing blank lines ignored — appending a host moves the
+blank line above it out of the previous block):
+
+| Our change | On the new content |
+|---|---|
+| block edited | replaces its match; takes the match's `lead`/`tail` |
+| block removed | its match is removed |
+| new block at the end | appended |
+| new block elsewhere (Duplicar) | inserted after its neighbour's match |
+| anything else | the new content as it is |
+
+A block whose match is missing, or not unique in either version, raises
+`ConfigConflict(path)`: nothing is written, no backup is made, and the
+in-memory set is left as it was. The UI shows "O ~/.ssh/config mudou desde
+que foi aberto" and reloads, asking the user to make the edit again. What
+remains is the milliseconds between reading again and `os.replace`.
 
 ---
 
@@ -487,6 +513,10 @@ toast "Salvo em ~/.ssh/config".
 
 On `ConfigError`, show: "O arquivo não foi gravado" / "O ssh recusou a
 configuração, então nada foi alterado no disco." plus the ssh message.
+
+On `ConfigConflict`, show "O {path} mudou desde que foi aberto" / "Outro
+programa alterou o arquivo no mesmo trecho que você editou, então nada foi
+gravado. …", then reload. Deleting a connection takes the same path.
 
 ### Connecting — `Acessar`
 

@@ -82,6 +82,12 @@ teste automatizado que falha se for quebrado.
 7. **Nunca escrevemos num arquivo que não lemos.** Os arquivos trazidos por
    `Include` são editáveis justamente porque foram carregados; nada além
    disso é tocado.
+8. **Mudanças de outros programas sobrevivem.** Antes de gravar, o arquivo é
+   lido de novo. Se outro programa — um script de provisionamento, o seu
+   editor de texto — mexeu nele desde que o aplicativo o abriu, a sua edição
+   é reaplicada sobre o conteúdo novo, e a mudança dele fica. Se as duas
+   caíram no mesmo trecho, nada é gravado e o aplicativo pede para você
+   repetir a edição sobre o arquivo atual.
 
 Um detalhe do mesmo espírito: se uma opção tiver um valor que o widget certo
 não conseguiria guardar — `ConnectTimeout 99999`, `Compression maybe` — ela
