@@ -3,7 +3,8 @@
 The prose lives in `parvussh/i18n/pt_br/guide.py` under `guide.<key>.title` and
 `guide.<key>.body`, because every user-visible string lives under
 `parvussh/i18n/`. Bodies are Pango markup — `<tt>` around commands, `<b>` for
-the one rule worth emphasising, and nothing else.
+the one rule worth emphasising, and nothing else. A line that is a whole
+`<tt>…</tt>` is shown as a command, with its own copy button.
 """
 
 from __future__ import annotations

@@ -59,6 +59,10 @@ quando falha) e uma página explicando como o arquivo funciona — incluindo a
 regra que mais surpreende: **o OpenSSH usa a primeira definição que encontrar**,
 não a última.
 
+No guia, cada comando fica num bloco à parte, com um botão de copiar por linha.
+Um botão por linha de propósito: em "valide, depois recarregue", o segundo
+comando só deve rodar se o primeiro passar.
+
 ---
 
 ## O contrato com o seu arquivo

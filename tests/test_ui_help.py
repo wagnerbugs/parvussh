@@ -12,6 +12,8 @@ from parvussh.i18n import available_locales, current_locale, set_locale
 
 pytestmark = pytest.mark.gui
 
+COPY_ICON = "edit-copy-symbolic"
+
 CONFIG = """# não mexer sem café
 
 Host vps-blog
@@ -155,6 +157,220 @@ def test_an_enum_without_an_example_lists_its_values(gtk) -> None:
 
 def test_opening_help_does_not_raise(app) -> None:
     app.show_help()
+
+
+# -- commands set apart, with a copy button ---------------------------------
+
+
+def split(body: str):
+    from parvussh.ui.help import split_body
+
+    return split_body(body)
+
+
+def commands(*lines: str):
+    from parvussh.ui.help import Commands
+
+    return Commands(lines)
+
+
+def test_a_command_paragraph_becomes_a_block(gtk) -> None:
+    body = "Rode na sua máquina:\n\n<tt>ssh-add ~/.ssh/id_ed25519</tt>\n\nPronto."
+
+    assert split(body) == [
+        "Rode na sua máquina:",
+        commands("ssh-add ~/.ssh/id_ed25519"),
+        "Pronto.",
+    ]
+
+
+def test_consecutive_command_lines_share_one_block(gtk) -> None:
+    body = "<tt>chmod 700 ~/.ssh</tt>\n<tt>chmod 600 ~/.ssh/authorized_keys</tt>"
+
+    assert split(body) == [
+        commands("chmod 700 ~/.ssh", "chmod 600 ~/.ssh/authorized_keys")
+    ]
+
+
+def test_a_blank_line_starts_a_new_block(gtk) -> None:
+    body = "<tt>ssh -v apelido</tt>\n\n<tt>ssh -G apelido</tt>"
+
+    assert split(body) == [commands("ssh -v apelido"), commands("ssh -G apelido")]
+
+
+def test_a_sentence_leading_into_commands_stays_prose(gtk) -> None:
+    """The sshd_config lines follow their lead-in with no blank line between."""
+    body = (
+        "Em <tt>/etc/ssh/sshd_config</tt>, no servidor:\n"
+        "<tt>PasswordAuthentication no</tt>\n"
+        "<tt>PermitRootLogin prohibit-password</tt>\n\n"
+        "A segunda linha libera o root apenas por chave."
+    )
+
+    assert split(body) == [
+        "Em <tt>/etc/ssh/sshd_config</tt>, no servidor:",
+        commands("PasswordAuthentication no", "PermitRootLogin prohibit-password"),
+        "A segunda linha libera o root apenas por chave.",
+    ]
+
+
+def test_tt_inside_a_sentence_is_not_a_command(gtk) -> None:
+    body = "O tipo <tt>ed25519</tt> é a escolha atual.\n<tt>a</tt> e <tt>b</tt>"
+
+    assert split(body) == [body]
+
+
+def test_paragraph_breaks_inside_prose_are_kept(gtk) -> None:
+    body = "Um.\n\nDois.\n\n<tt>ls</tt>"
+
+    assert split(body) == ["Um.\n\nDois.", commands("ls")]
+
+
+def test_a_command_is_copied_as_typed_not_as_markup(gtk) -> None:
+    """`&&` and `<` are escaped in the catalog; the terminal must get them back."""
+    body = "<tt>cd /srv &amp;&amp; ls &lt;dir&gt; &quot;x&quot;</tt>"
+
+    assert split(body) == [commands('cd /srv && ls <dir> "x"')]
+
+
+def guide_parts():
+    from parvussh.ui.help import split_body
+
+    for locale, key, body in guide_bodies():
+        for part in split_body(body):
+            yield f"{locale}:{key}", part
+
+
+def test_every_command_the_guide_shows_gets_a_block(gtk) -> None:
+    from parvussh.ui.help import Commands
+
+    lines = [
+        line
+        for _where, part in guide_parts()
+        if isinstance(part, Commands)
+        for line in part.lines
+    ]
+
+    for command in (
+        'ssh-keygen -t ed25519 -C "seu-nome@notebook"',
+        "ssh-copy-id -i ~/.ssh/id_ed25519.pub usuario@servidor",
+        "chown -R $USER:$USER ~/.ssh",
+        "sudo sshd -T | grep -i passwordauthentication",
+        'ssh-keygen -t ed25519 -C "your-name@laptop"',
+    ):
+        assert command in lines, command
+
+
+def test_no_whole_line_command_is_left_in_the_prose(gtk) -> None:
+    from parvussh.ui.help import COMMAND_LINE, Commands
+
+    for where, part in guide_parts():
+        if isinstance(part, Commands):
+            continue
+        for line in part.split("\n"):
+            assert COMMAND_LINE.fullmatch(line) is None, f"{where}: {line}"
+
+
+def test_every_prose_part_is_still_valid_markup(gtk) -> None:
+    """Splitting must never cut a tag in half."""
+    from gi.repository import GLib, Pango
+
+    from parvussh.ui.help import Commands
+
+    for where, part in guide_parts():
+        if isinstance(part, Commands):
+            continue
+        try:
+            Pango.parse_markup(part, -1, "\0")
+        except GLib.Error as error:
+            pytest.fail(f"{where} split into invalid markup: {error}")
+
+
+def copy_buttons(widget) -> list:
+    from gi.repository import Gtk
+
+    found = []
+    child = widget.get_first_child()
+    while child is not None:
+        if isinstance(child, Gtk.Button) and child.get_icon_name() == COPY_ICON:
+            found.append(child)
+        found.extend(copy_buttons(child))
+        child = child.get_next_sibling()
+    return found
+
+
+def dialog_buttons(dialog) -> list:
+    return [button for page in dialog.pages for button in copy_buttons(page)]
+
+
+def test_every_command_line_has_its_own_copy_button(help_dialog) -> None:
+    """One per line: the second of "test, then reload" must not ride along."""
+    from parvussh.ui.help import Commands
+
+    lines = sum(
+        len(part.lines)
+        for part in (
+            part
+            for section in (*SECTIONS, ABOUT_CONFIG)
+            for part in split(section.body)
+        )
+        if isinstance(part, Commands)
+    )
+
+    buttons = dialog_buttons(help_dialog)
+    assert len(buttons) == lines
+    assert all(button.get_tooltip_text() == "Copiar" for button in buttons)
+
+
+def test_the_copy_button_puts_the_command_on_the_clipboard(
+    help_dialog, pump, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    said: list[str] = []
+    monkeypatch.setattr(
+        help_dialog, "add_toast", lambda toast: said.append(toast.get_title())
+    )
+    copied: list[str] = []
+
+    dialog_buttons(help_dialog)[0].emit("clicked")
+
+    def read(clipboard, result) -> None:
+        copied.append(clipboard.read_text_finish(result))
+
+    help_dialog.get_clipboard().read_text_async(None, read)
+
+    pump(lambda: copied != [])
+    assert copied == ['ssh-keygen -t ed25519 -C "seu-nome@notebook"']
+    assert said == ["Copiado para a área de transferência"]
+
+
+def test_each_button_copies_its_own_line(gtk) -> None:
+    """In a block of three, the second button copies the second command."""
+    from parvussh.data.guide import Section
+    from parvussh.ui.help import prose_group
+
+    copied: list[str] = []
+    buttons = copy_buttons(prose_group(Section("permissions"), copied.append))
+
+    for button in buttons:
+        button.emit("clicked")
+
+    assert copied == [
+        "chmod 700 ~/.ssh",
+        "chmod 600 ~/.ssh/authorized_keys",
+        "chown -R $USER:$USER ~/.ssh",
+    ]
+
+
+def test_a_second_copy_replaces_the_first_notice(help_dialog) -> None:
+    """Three quick copies must not queue three toasts one after another."""
+    first, second = dialog_buttons(help_dialog)[:2]
+    dismissed: list[bool] = []
+
+    first.emit("clicked")
+    help_dialog._copied.connect("dismissed", lambda _toast: dismissed.append(True))
+    second.emit("clicked")
+
+    assert dismissed == [True]
 
 
 # -- duplicating -----------------------------------------------------------

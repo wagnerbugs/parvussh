@@ -7,6 +7,11 @@ format. Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- In the help guide, every command sits in a block of its own, set apart from
+  the text, with a copy button on each line. One button per line, not per
+  block: in "test the config, then reload", the second command should only
+  run if the first passed. What is copied is the command as typed, `&&` and
+  all, and a short notice says it was copied.
 - The connection list can be sorted by name, from the sidebar menu under
   **Ordenar**: case does not matter, `vps2` comes before `vps10`, and wildcard
   blocks such as `Host *` stay at the end. **Ordem do arquivo**, the order ssh

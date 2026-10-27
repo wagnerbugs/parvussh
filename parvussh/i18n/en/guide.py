@@ -5,6 +5,11 @@ Keys are `guide.<section>.title` and `guide.<section>.body`, matching
 file names, `<b>` for the one rule worth emphasising, nothing else. Any
 literal `&` or `<` must be escaped.
 
+A line that is nothing but one `<tt>…</tt>` is shown as a command: set apart
+in its own block, with a copy button that copies exactly that line. Give
+every command its own line for that reason, and keep `<tt>` inside a sentence
+for names that are not meant to be run.
+
 The audience is a developer who runs a couple of VPSs and has never been told
 *why* any of this is the way it is. Each section says what to do, and then the
 one thing that usually goes wrong. Two habits come from that audience: say

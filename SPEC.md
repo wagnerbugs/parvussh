@@ -645,7 +645,14 @@ and it holds no connection.
    `Adw.ActionRow` grouped by category, subtitle = description + example or
    allowed values.
 2. **Chaves** (`dialog-password-symbolic`) — the six-step guide from
-   `data/guide.py`, rendered as wrapped, selectable, markup-enabled labels.
+   `data/guide.py`. Prose is wrapped, selectable, markup-enabled labels. A
+   line that is nothing but one `<tt>…</tt>` is a command: consecutive ones
+   share a `card` of monospace lines, a blank line starts a new card, and
+   each line has its own flat `edit-copy-symbolic` button (tooltip "Copiar")
+   that puts the unescaped text on the clipboard and raises a two-second toast,
+   "Copiado para a área de transferência", replacing the previous one. One
+   button per line because "test, then reload" is two commands, and the
+   second must only run if the first passed.
 3. **Como funciona** (`help-about-symbolic`) — how `Host` blocks map to the
    `ssh` command, and the first-match-wins rule for wildcards.
 
@@ -657,7 +664,9 @@ and it holds no connection.
 
 ## 8. Help guide content (pt-BR, `data/guide.py`)
 
-Six sections, each a `(title, markup_text)` pair. `<tt>` for commands.
+Six sections, each a `(title, markup_text)` pair. `<tt>` for commands, each
+command on a line of its own so it gets its own block and copy button (§7,
+Help dialog); `<tt>` inside a sentence for names that are not run.
 
 1. **1. Criar a chave (na sua máquina)** — a key is a pair of files; the
    private one never leaves; `ssh-keygen -t ed25519 -C "seu-nome@notebook"`;

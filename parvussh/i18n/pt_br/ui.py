@@ -265,6 +265,8 @@ STRINGS: dict[str, str] = {
     "help.page.about": "Como funciona",
     "help.with_example": "{description}\nExemplo: {example}",
     "help.with_values": "{description}\nValores: {values}",
+    "help.copy_tooltip": "Copiar",
+    "help.copied": "Copiado para a área de transferência",
     # -- duplicate and delete ---------------------------------------------
     "duplicate.alias": "{alias}-copia",
     "duplicate.alias_numbered": "{alias}-copia-{number}",

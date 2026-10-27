@@ -194,6 +194,8 @@ STRINGS: dict[str, str] = {
     "help.page.about": "How it works",
     "help.with_example": "{description}\nExample: {example}",
     "help.with_values": "{description}\nValues: {values}",
+    "help.copy_tooltip": "Copy",
+    "help.copied": "Copied to the clipboard",
     # -- duplicate and delete ---------------------------------------------
     "duplicate.alias": "{alias}-copy",
     "duplicate.alias_numbered": "{alias}-copy-{number}",
