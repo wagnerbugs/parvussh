@@ -176,3 +176,127 @@ def test_refreshing_keeps_the_selection_it_was_given(listed) -> None:
 
     assert listed.sidebar.listbox.get_selected_row().block is listed.hosts[2]
     assert listed.current is listed.hosts[2]
+
+
+# -- sorting ---------------------------------------------------------------
+
+
+def choose_order(window, order: str) -> None:
+    """What clicking a radio item in the menu does."""
+    from gi.repository import GLib
+
+    window.lookup_action("order").change_state(GLib.Variant("s", order))
+
+
+def order_state(window) -> str:
+    return window.lookup_action("order").get_state().unpack()
+
+
+def test_the_list_starts_in_the_order_ssh_reads(listed) -> None:
+    assert order_state(listed) == "file"
+    assert titles(listed) == ["vps-blog", "github.com", "*"]
+
+
+def test_the_menu_offers_both_orders(listed) -> None:
+    from gi.repository import Gio
+
+    section = listed.sidebar.menu.get_item_link(0, Gio.MENU_LINK_SECTION)
+    targets = [
+        section.get_item_attribute_value(index, Gio.MENU_ATTRIBUTE_TARGET).unpack()
+        for index in range(section.get_n_items())
+    ]
+    assert targets == ["file", "name"]
+
+
+def test_sorting_by_name_puts_the_wildcard_last(listed) -> None:
+    choose_order(listed, "name")
+
+    assert order_state(listed) == "name"
+    assert titles(listed) == ["github.com", "vps-blog", "*"]
+
+
+def test_the_file_order_comes_back(listed) -> None:
+    choose_order(listed, "name")
+    choose_order(listed, "file")
+
+    assert titles(listed) == ["vps-blog", "github.com", "*"]
+
+
+def test_sorting_keeps_the_connection_and_its_unsaved_edit(listed) -> None:
+    """Rows are moved, not rebuilt: nothing is selected, so nothing reloads."""
+    listed.sidebar.listbox.select_row(listed.sidebar.rows()[0])
+    listed.editor.hostname.set_text("203.0.113.99")
+
+    choose_order(listed, "name")
+
+    assert listed.current is listed.hosts[0]
+    assert listed.sidebar.listbox.get_selected_row().block is listed.hosts[0]
+    assert listed.editor.dirty is True
+    assert listed.editor.hostname.get_text() == "203.0.113.99"
+
+
+def test_sorting_never_touches_the_file(listed, fake_home: Path) -> None:
+    config = fake_home / ".ssh" / "config"
+    before = config.read_bytes()
+
+    choose_order(listed, "name")
+
+    assert config.read_bytes() == before
+    assert list(config.parent.glob("config.bak-*")) == []
+    assert [block.title for block in listed.hosts] == ["vps-blog", "github.com", "*"]
+
+
+def test_the_filter_still_applies_once_sorted(listed) -> None:
+    listed.sidebar.search.set_text("blog")
+
+    choose_order(listed, "name")
+
+    assert visible_titles(listed) == ["vps-blog"]
+
+
+def test_a_new_connection_takes_its_place_by_name(listed) -> None:
+    choose_order(listed, "name")
+
+    listed.new_host()
+
+    assert titles(listed) == ["github.com", "nova-conexao", "vps-blog", "*"]
+    assert listed.sidebar.listbox.get_selected_row().block is listed.current
+
+
+def test_the_order_is_remembered(listed) -> None:
+    from parvussh.core import settings
+
+    choose_order(listed, "name")
+
+    assert settings.load().order == "name"
+
+
+def test_a_new_window_opens_in_the_saved_order(listed) -> None:
+    from parvussh.ui.window import ParvuSshWindow
+
+    choose_order(listed, "name")
+    reopened = ParvuSshWindow()
+
+    assert order_state(reopened) == "name"
+    assert titles(reopened) == ["github.com", "vps-blog", "*"]
+
+
+def test_an_order_that_cannot_be_saved_is_still_applied(
+    listed, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The list sorts either way; the toast says it will not survive a restart."""
+    from parvussh.core import settings
+
+    def refuse(_settings) -> None:
+        raise PermissionError("Permission denied")
+
+    said: list[str] = []
+    monkeypatch.setattr(settings, "save", refuse)
+    monkeypatch.setattr(listed, "toast", said.append)
+
+    choose_order(listed, "name")
+
+    assert titles(listed) == ["github.com", "vps-blog", "*"]
+    assert len(said) == 1
+    assert "não foi gravada" in said[0]
+    assert "Permission denied" in said[0]

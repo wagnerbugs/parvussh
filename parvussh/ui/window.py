@@ -9,6 +9,7 @@ the words.
 from __future__ import annotations
 
 import threading
+from dataclasses import replace
 from pathlib import Path
 
 import gi
@@ -101,6 +102,15 @@ class ParvuSshWindow(Adw.ApplicationWindow):
             action.connect("activate", lambda *_a, fn=handler: fn())
             self.add_action(action)
 
+        # Stateful, so the menu shows which order is in use as a radio item.
+        saved = settings.load().order
+        order = Gio.SimpleAction.new_stateful(
+            "order", GLib.VariantType.new("s"), GLib.Variant("s", saved)
+        )
+        order.connect("change-state", lambda _a, value: self.set_order(value.unpack()))
+        self.add_action(order)
+        self.sidebar.set_order(saved)
+
         application = self.get_application()
         if application is not None:
             for action_name, keys in ACCELERATORS.items():
@@ -141,6 +151,16 @@ class ParvuSshWindow(Adw.ApplicationWindow):
     def refresh_list(self, select: Block | None = None) -> None:
         """Rebuild the sidebar from the config in memory, keeping a selection."""
         self.sidebar.set_blocks(self.hosts, select=select)
+
+    def set_order(self, order: str) -> None:
+        """Sort the list and remember the choice. The file stays as it is."""
+        self.lookup_action("order").set_state(GLib.Variant("s", order))
+        self.sidebar.set_order(order)
+        try:
+            settings.save(replace(settings.load(), order=order))
+        except OSError as error:
+            where = shorten_home(settings.path())
+            self.toast(t("prefs.error.save", path=where, detail=error))
 
     @property
     def hosts(self) -> list[Block]:

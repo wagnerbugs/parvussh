@@ -24,7 +24,8 @@ SSH de você — é te apresentar a ele.
 
 ## O que ele faz
 
-- Lista, filtra e edita as conexões do seu `~/.ssh/config`
+- Lista, filtra e edita as conexões do seu `~/.ssh/config`, na ordem do
+  arquivo ou por nome — ordenar muda só a lista, nunca o arquivo
 - Catálogo de 50 opções do SSH, buscáveis **pelo que fazem**: digite `chave`,
   `bastion` ou `sessão` e veja o que aparece
 - Cria chaves `ed25519`, `ecdsa` ou `rsa` e escolhe qual usar em cada conexão
@@ -410,9 +411,10 @@ terminal, no `scp`, no `rsync` e no Git, porque nunca deixaram de morar onde
 sempre moraram.
 
 O único arquivo que o aplicativo guarda para si é
-`~/.config/parvussh/settings.ini`, com o terminal escolhido em Preferências e
-quantas cópias do config guardar. Nenhuma conexão mora nele; apagá-lo só
-devolve o terminal padrão do sistema e as 3 cópias.
+`~/.config/parvussh/settings.ini`, com o terminal escolhido em Preferências,
+quantas cópias do config guardar e a ordem da lista. Nenhuma conexão mora nele;
+apagá-lo só devolve o terminal padrão do sistema, as 3 cópias e a ordem do
+arquivo.
 
 Isso é o oposto de um gerenciador que importa suas conexões para um banco
 próprio. Aquele modelo pede confiança e cobra dependência. Este pede confiança

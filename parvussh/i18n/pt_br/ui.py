@@ -42,6 +42,9 @@ STRINGS: dict[str, str] = {
     "menu.preferences": "Preferências",
     "menu.duplicate": "Duplicar",
     "menu.delete": "Excluir",
+    "menu.order.title": "Ordenar",
+    "menu.order.file": "Ordem do arquivo",
+    "menu.order.name": "Nome (A-Z)",
     # -- sidebar ----------------------------------------------------------
     "sidebar.title": "Conexões",
     "sidebar.new_tooltip": "Nova conexão (Ctrl+N)",

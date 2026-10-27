@@ -1,4 +1,4 @@
-"""The left column: every `Host` block in the config, filterable."""
+"""The left column: every `Host` block in the config, filterable and sortable."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gio, Gtk  # noqa: E402
 
 from parvussh.core.models import Block  # noqa: E402
+from parvussh.core.order import BY_FILE, BY_NAME, arrange  # noqa: E402
 from parvussh.i18n import t  # noqa: E402
 from parvussh.ui.markup import text_row  # noqa: E402
 
@@ -30,6 +31,12 @@ class Sidebar(Adw.NavigationPage):
         # rows come and go, and acting on that would load blocks the user
         # never clicked.
         self._rebuilding = False
+        self.order = BY_FILE
+        # The blocks in file order, and where each one goes in `order`. The
+        # rows are sorted by GTK from that rank, so changing the order moves
+        # rows without rebuilding them: the selection and the form stay put.
+        self._blocks: list[Block] = []
+        self._rank: dict[Block, int] = {}
 
         self.search = Gtk.SearchEntry(
             placeholder_text=t("sidebar.filter_placeholder"),
@@ -58,6 +65,7 @@ class Sidebar(Adw.NavigationPage):
             valign=Gtk.Align.START,
         )
         self.listbox.set_filter_func(self._matches_filter)
+        self.listbox.set_sort_func(self._compare)
         self.listbox.set_placeholder(self.placeholder)
         self.listbox.connect("row-selected", self._on_row_selected)
 
@@ -86,15 +94,24 @@ class Sidebar(Adw.NavigationPage):
             )
         )
 
-        menu = Gio.Menu()
-        menu.append(t("menu.preferences"), "win.preferences")
-        menu.append(t("menu.help"), "win.help")
-        menu.append(t("menu.reload"), "win.reload")
-        menu.append(t("menu.about"), "app.about")
+        # Radio items: `win.order` is stateful, and each item names its value.
+        order = Gio.Menu()
+        order.append(t("menu.order.file"), f"win.order::{BY_FILE}")
+        order.append(t("menu.order.name"), f"win.order::{BY_NAME}")
+
+        app = Gio.Menu()
+        app.append(t("menu.preferences"), "win.preferences")
+        app.append(t("menu.help"), "win.help")
+        app.append(t("menu.reload"), "win.reload")
+        app.append(t("menu.about"), "app.about")
+
+        self.menu = Gio.Menu()
+        self.menu.append_section(t("menu.order.title"), order)
+        self.menu.append_section(None, app)
         header.pack_end(
             Gtk.MenuButton(
                 icon_name="open-menu-symbolic",
-                menu_model=menu,
+                menu_model=self.menu,
                 tooltip_text=t("sidebar.menu_tooltip"),
             )
         )
@@ -104,6 +121,8 @@ class Sidebar(Adw.NavigationPage):
 
     def set_blocks(self, blocks: list[Block], select: Block | None = None) -> None:
         """Rebuild the list, optionally leaving `select` selected afterwards."""
+        self._blocks = list(blocks)
+        self._rank = self._ranks()
         self._rebuilding = True
         while (child := self.listbox.get_first_child()) is not None:
             self.listbox.remove(child)
@@ -154,6 +173,21 @@ class Sidebar(Adw.NavigationPage):
             self.placeholder.set_text(t("sidebar.empty"))
         else:
             self.placeholder.set_text(t("sidebar.no_matches", query=query))
+
+    # -- sorting -----------------------------------------------------------
+
+    def set_order(self, order: str) -> None:
+        """Sort the rows again. Nothing is rebuilt and nothing is selected."""
+        self.order = order
+        self._rank = self._ranks()
+        self.listbox.invalidate_sort()
+
+    def _ranks(self) -> dict[Block, int]:
+        arranged = arrange(self._blocks, self.order)
+        return {block: index for index, block in enumerate(arranged)}
+
+    def _compare(self, first: Adw.ActionRow, second: Adw.ActionRow) -> int:
+        return self._rank[first.block] - self._rank[second.block]
 
     # -- filtering ---------------------------------------------------------
 

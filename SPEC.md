@@ -462,8 +462,18 @@ the editor header replaces it with the selected alias.
 ### Sidebar — `Adw.NavigationPage` "Conexões"
 
 - Header: `+` button (`win.new`, tooltip "Nova conexão (Ctrl+N)") on the left;
-  hamburger menu on the right with "Preferências", "Ajuda e dicas" and
-  "Recarregar do disco".
+  hamburger menu on the right. Its first section, "Ordenar", holds two radio
+  items on the stateful `win.order`: "Ordem do arquivo" (`file`, the default)
+  and "Nome (A-Z)" (`name`). The second holds "Preferências", "Ajuda e dicas",
+  "Recarregar do disco" and "Sobre o ParvuSsh".
+- Sorting moves rows, never blocks: `core/order.py` ranks the hosts and the
+  list box sorts by that rank (`set_sort_func` + `invalidate_sort`), so the
+  selection, the filter and an unsaved edit all survive a change of order, and
+  the file is not written. By name means case-insensitive, numbers compared as
+  numbers (`vps2` before `vps10`), wildcard blocks after every host, and equal
+  names in file order. File order is the default because it is the order ssh
+  reads: for each option the first value wins, so moving a `Host *` above a
+  host in the file would change what ssh does.
 - `Gtk.SearchEntry`, placeholder `Filtrar conexões…`, filters on alias,
   `HostName` and `User` via `set_filter_func` + `invalidate_filter`.
 - `Gtk.ListBox` with `boxed-list` style, one `Adw.ActionRow` per host block:
@@ -620,9 +630,10 @@ toast; opening the dialog writes nothing. The number applies to every file the
 app writes, `Include` targets too (see §3, the backup family).
 
 Stored in `$XDG_CONFIG_HOME/parvussh/settings.ini` (`~/.config/…` by default),
-section `[terminal]`, key `command`, and section `[backups]`, key `keep`,
+section `[terminal]`, key `command`, section `[backups]`, key `keep`, and
+section `[list]`, key `order` (the sidebar's sort, chosen from its menu),
 written atomically. A `keep` below 1 reads as 1, and one that is not a number
-as 3. A file that cannot be
+as 3. An `order` other than `file` or `name` reads as `file`. A file that cannot be
 parsed reads as the defaults. It is the only file the app keeps of its own,
 and it holds no connection.
 

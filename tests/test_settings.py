@@ -109,3 +109,32 @@ def test_a_number_below_one_or_not_a_number_is_not_obeyed(
 def test_zero_is_saved_as_one() -> None:
     settings.save(Settings(backups=0))
     assert settings.load().backups == 1
+
+
+# -- the order of the connection list ---------------------------------------
+
+
+def test_the_list_follows_the_file_unless_told_otherwise() -> None:
+    assert settings.load().order == "file"
+
+
+def test_the_order_is_read_back() -> None:
+    settings.save(Settings(order="name"))
+    assert settings.load().order == "name"
+
+
+def test_saving_the_order_keeps_the_other_settings() -> None:
+    settings.save(Settings(terminal="xterm", backups=5, order="name"))
+    assert settings.load() == Settings(terminal="xterm", backups=5, order="name")
+
+
+@pytest.mark.parametrize("written", ["recent", "", "NAME"])
+def test_an_order_the_app_does_not_know_reads_as_the_file(written: str) -> None:
+    settings.path().parent.mkdir(parents=True)
+    settings.path().write_text(f"[list]\norder = {written}\n", encoding="utf-8")
+    assert settings.load().order == "file"
+
+
+def test_an_unknown_order_is_saved_as_the_file() -> None:
+    settings.save(Settings(order="recent"))
+    assert "order = file" in settings.path().read_text(encoding="utf-8")

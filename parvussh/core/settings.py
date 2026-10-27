@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from parvussh.core.backups import KEEP
+from parvussh.core.order import BY_FILE, ORDERS
 
 DIRECTORY = "parvussh"
 FILENAME = "settings.ini"
@@ -27,6 +28,8 @@ TERMINAL = "terminal"
 COMMAND = "command"
 BACKUPS = "backups"
 COUNT = "keep"
+LIST = "list"
+ORDER = "order"
 
 
 @dataclass(frozen=True)
@@ -35,6 +38,8 @@ class Settings:
     terminal: str = ""
     #: How many dated copies of each config file stay; older ones are trashed.
     backups: int = KEEP
+    #: How the connection list is sorted. Only the list: the file never moves.
+    order: str = BY_FILE
 
 
 def path() -> Path:
@@ -60,6 +65,7 @@ def load() -> Settings:
     return Settings(
         terminal=parser.get(TERMINAL, COMMAND, fallback="").strip(),
         backups=_count(parser.get(BACKUPS, COUNT, fallback="")),
+        order=_order(parser.get(LIST, ORDER, fallback="")),
     )
 
 
@@ -68,6 +74,7 @@ def save(settings: Settings) -> Path:
     parser = _parser()
     parser[TERMINAL] = {COMMAND: settings.terminal.strip()}
     parser[BACKUPS] = {COUNT: str(max(settings.backups, 1))}
+    parser[LIST] = {ORDER: _order(settings.order)}
     target = path()
     target.parent.mkdir(parents=True, exist_ok=True)
     handle, temp = tempfile.mkstemp(dir=target.parent, prefix=f".{FILENAME}-")
@@ -89,6 +96,12 @@ def _count(text: str) -> int:
         return max(int(text), 1)
     except ValueError:
         return KEEP
+
+
+def _order(text: str) -> str:
+    """A known order, or the file's: a hand edit may have written any word."""
+    text = text.strip()
+    return text if text in ORDERS else BY_FILE
 
 
 def _parser() -> configparser.ConfigParser:

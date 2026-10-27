@@ -7,6 +7,12 @@ format. Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- The connection list can be sorted by name, from the sidebar menu under
+  **Ordenar**: case does not matter, `vps2` comes before `vps10`, and wildcard
+  blocks such as `Host *` stay at the end. **Ordem do arquivo**, the order ssh
+  reads, is still the default. Only the list moves — the file is never
+  rewritten for this, the connection on screen stays open, and an unsaved edit
+  stays unsaved. The choice is kept in `settings.ini`.
 - Only the newest 3 backups of each config file stay beside it; older ones go
   to the trash, from where they can be restored, and none is ever deleted
   outright. Newest is read from the date in the name. Only names that match
