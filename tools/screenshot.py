@@ -10,6 +10,7 @@ images never show anybody's real servers.
 
 from __future__ import annotations
 
+import os
 import sys
 import tempfile
 from collections.abc import Callable, Iterator
@@ -22,6 +23,12 @@ gi.require_version("Gsk", "4.0")
 gi.require_version("Adw", "1")
 
 from gi.repository import Adw, GLib, Gsk, Gtk  # noqa: E402
+
+# libadwaita takes the accent colour and the light or dark preference from the
+# desktop, so without these the README would show whatever this machine's
+# owner chose. Stock Adwaita, dark, is what every image is taken in.
+os.environ.setdefault("ADW_DEBUG_COLOR_SCHEME", "prefer-dark")
+os.environ.setdefault("ADW_DEBUG_ACCENT_COLOR", "blue")
 
 WIDTH, HEIGHT = 1020, 700
 SETTLE_MS = 700
@@ -100,16 +107,24 @@ def steps(window: Gtk.Window, out: Path) -> Iterator[Callable[[], None]]:
             )
         ).present(window)
 
+    help_dialog = HelpDialog()
+
     def help_page() -> None:
         capture(window, out / "teste.png")
-        HelpDialog().present(window)
+        help_dialog.present(window)
+
+    def guide_page() -> None:
+        capture(window, out / "ajuda.png")
+        _options, keys, _about = help_dialog.pages
+        help_dialog.set_visible_page(keys)
 
     def last() -> None:
-        capture(window, out / "ajuda.png")
+        capture(window, out / "guia.png")
 
     yield connection
     yield test_result
     yield help_page
+    yield guide_page
     yield last
 
 

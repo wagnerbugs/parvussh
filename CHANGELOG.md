@@ -61,6 +61,10 @@ format. Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
 
+- The README screenshots are taken again from the current interface, Acessar
+  included, and a fourth shows the guide's command blocks. `make screenshots`
+  now pins stock Adwaita — dark, blue accent — instead of taking the colours
+  of whoever runs it.
 - Backups are always `0600`. They were made with `copy2`, which copies the
   config's own permissions, so a config readable by others left behind copies
   readable by others too. They are now created with `O_EXCL` as well: another

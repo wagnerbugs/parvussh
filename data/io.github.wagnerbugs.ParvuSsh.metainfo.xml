@@ -39,8 +39,8 @@
     <p>Main features:</p>
     <p xml:lang="pt_BR">Principais recursos:</p>
     <ul>
-      <li>Lists, filters and edits the connections in your ~/.ssh/config</li>
-      <li xml:lang="pt_BR">Lista, filtra e edita as conexões do seu ~/.ssh/config</li>
+      <li>Lists, filters, sorts and edits the connections in your ~/.ssh/config</li>
+      <li xml:lang="pt_BR">Lista, filtra, ordena e edita as conexões do seu ~/.ssh/config</li>
       <li>A catalog of 50 SSH options, searchable by name or by what they do</li>
       <li xml:lang="pt_BR">Catálogo de 50 opções do SSH, buscáveis por nome ou pelo que fazem</li>
       <li>Creates ed25519, ecdsa or rsa keys and picks which one each connection uses</li>
@@ -49,8 +49,8 @@
       <li xml:lang="pt_BR">Testa a conexão antes de salvar, e explica o que deu errado</li>
       <li>Opens your own terminal on the connection, running ssh with its alias</li>
       <li xml:lang="pt_BR">Abre o seu terminal já na conexão, rodando ssh com o apelido</li>
-      <li>A step-by-step guide to creating a key and installing it on a server</li>
-      <li xml:lang="pt_BR">Guia passo a passo de como criar e instalar uma chave num servidor</li>
+      <li>A step-by-step guide to creating a key and installing it on a server, with a copy button on every command</li>
+      <li xml:lang="pt_BR">Guia passo a passo de como criar e instalar uma chave num servidor, com um botão de copiar em cada comando</li>
       <li>A dated backup before every write, and validation with ssh -G</li>
       <li xml:lang="pt_BR">Backup datado antes de cada gravação, e validação com ssh -G</li>
     </ul>

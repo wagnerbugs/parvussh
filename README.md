@@ -33,7 +33,8 @@ SSH de você — é te apresentar a ele.
 - **Acessar** abre o seu terminal já rodando `ssh apelido` — o mesmo comando
   que você digitaria. Qual terminal, você escolhe em Preferências (`Ctrl+,`);
   veja [Escolhendo o terminal](#escolhendo-o-terminal-do-acessar)
-- Guia passo a passo de como criar uma chave e instalá-la num servidor
+- Guia passo a passo de como criar uma chave e instalá-la num servidor, com
+  um botão de copiar em cada comando
 
 ### O teste de conexão diz coisa útil
 
@@ -58,6 +59,8 @@ embaixo, dobrada, para quem quiser.
 quando falha) e uma página explicando como o arquivo funciona — incluindo a
 regra que mais surpreende: **o OpenSSH usa a primeira definição que encontrar**,
 não a última.
+
+![O guia de chaves, com cada comando num bloco à parte e um botão de copiar](docs/screenshots/guia.png)
 
 No guia, cada comando fica num bloco à parte, com um botão de copiar por linha.
 Um botão por linha de propósito: em "valide, depois recarregue", o segundo
